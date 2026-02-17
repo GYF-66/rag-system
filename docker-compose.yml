@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      target: production
+    container_name: student-ai-backend
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGODB_URL=${MONGODB_URL:-mongodb://mongo:27017}
+      - DATABASE_NAME=${DATABASE_NAME:-student_ai}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_BASE_URL=${LLM_BASE_URL}
+    depends_on:
+      - mongo
+    volumes:
+      - ./database:/app/database:ro
+    restart: unless-stopped
+    networks:
+      - student-ai-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: student-ai-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - student-ai-network
+
+  mongo:
+    image: mongo:6.0
+    container_name: student-ai-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    networks:
+      - student-ai-network
+
+volumes:
+  mongo-data:
+
+networks:
+  student-ai-network:
+    driver: bridge
