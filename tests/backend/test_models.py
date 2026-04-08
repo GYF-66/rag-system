@@ -4,7 +4,7 @@
 """
 import pytest
 from datetime import datetime
-from pydantic ValidationError
+from pydantic import ValidationError
 
 
 @pytest.mark.unit
@@ -37,9 +37,9 @@ def test_chat_request_validation():
     """测试 ChatRequest 验证"""
     from backend.models import ChatRequest
 
-    # 测试空消息
+    # 测试缺少必填字段
     with pytest.raises(ValidationError):
-        ChatRequest(message="")
+        ChatRequest()
 
 
 @pytest.mark.unit

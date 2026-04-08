@@ -38,12 +38,12 @@ jobs:
 
     - name: Type check with mypy
       run: |
-        mypy backend/ --ignore-missing-imports || true
+        mypy backend/ --ignore-missing-imports
 
     - name: Security check with Bandit
       run: |
-        bandit -r backend/ -ll -ii -x tests/ || true
+        bandit -r backend/ -ll -ii -x tests/
 
     - name: Check dependencies for vulnerabilities
       run: |
-        safety check -r requirements.txt --full-report || true
+        safety check -r requirements.txt --full-report

@@ -1,25 +1,43 @@
 # -*- coding: utf-8 -*-
 """
-LLM 服务模块
-支持 DeepSeek / OpenAI / 兼容 API 调用
+Ollama 本地 LLM GPU 推理服务
+支持在本地 GPU 上运行量化版 LLM（如 Qwen2.5-7B-Q4）
+
+RTX 5070 (8GB VRAM) 推荐模型：
+  - qwen2.5:7b-instruct-q4_K_M  (~4.5GB VRAM)
+  - deepseek-r1:7b-distill-qwen-q4_K_M (~4GB VRAM)
+  - llama3.2:3b-instruct         (~2GB VRAM)
+
+安装 ollama: https://ollama.com/download
+启动示例: ollama run qwen2.5:7b-instruct-q4_K_M
 """
-import httpx
+import asyncio
+import json
 import logging
 from typing import List, Dict, Optional, AsyncGenerator
-import json
 
-from config import (
-    LLM_API_KEY,
-    LLM_API_BASE_URL,
-    LLM_MODEL,
-    LLM_MAX_TOKENS,
-    LLM_TEMPERATURE,
-    LLM_TIMEOUT,
-    AGENT_NAME,
-    AGENT_ROLE
-)
+import httpx
 
 logger = logging.getLogger(__name__)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API-based LLM Service（原有实现，保留）
+# ─────────────────────────────────────────────────────────────────────────────
+try:
+    from config import (
+        LLM_API_KEY, LLM_API_BASE_URL, LLM_MODEL,
+        LLM_MAX_TOKENS, LLM_TEMPERATURE, LLM_TIMEOUT,
+        AGENT_NAME, AGENT_ROLE, LLM_PROVIDER,
+    )
+except ImportError:
+    LLM_API_KEY = LLM_API_BASE_URL = LLM_MODEL = ''
+    LLM_MAX_TOKENS = 2048; LLM_TEMPERATURE = 0.7; LLM_TIMEOUT = 60.0
+    AGENT_NAME = 'AI Assistant'; AGENT_ROLE = 'AI Knowledge Assistant'
+    LLM_PROVIDER = 'api'
+
+MAX_RETRIES = 3
+RETRY_DELAY_BASE = 1.0
 
 
 class LLMService:
@@ -32,198 +50,352 @@ class LLMService:
         self.max_tokens = LLM_MAX_TOKENS
         self.temperature = LLM_TEMPERATURE
         self.timeout = LLM_TIMEOUT
+        self.system_prompt = f"""你是{AGENT_NAME}，安徽信息工程学院人工智能专业的AI问答助手。
 
-        # 系统提示词 - 推理型架构（彻底修复相关性问题）
-        self.system_prompt = f"""你是{AGENT_NAME}，安徽信息工程学院的官方AI问答助手。
+## 身份与职责：
+你专注于回答人工智能专业培养方案、专业课程教案、课程体系、实践教学等方面的问题。
 
-## 【重要】输出规范：
+## 回答规范：
+- 直接回答问题，不要说"根据提供的资料"等开场白
+- 使用 **加粗** 标记关键信息
+- 只使用与问题直接相关的参考资料，严禁塞入无关内容
 
-### 第一步：内部思考（必须）
-在回答前，你需要先进行内部思考：
-1. **分析问题核心**：用户真正想知道什么？（如"请假流程"="如何请假+需要什么手续"）
-2. **评估参考资料**：逐一检查每条参考资料与问题的相关性
-   - 如果资料内容（如学分折算、考试分数、奖学金等）与问题完全无关 → 直接丢弃，禁止使用
-   - 只使用真正回答问题的资料
-3. **判断是否足够**：相关资料是否足够回答问题？
-
-### 第二步：正式回答
-**输出规则：**
-- ✅ **只输出与问题直接相关的信息**
-- ✅ 直接给出答案，不要说"根据提供的资料"等开场白
-- ✅ 使用 **加粗** 标记关键信息（条件、时间、地点等）
-- ✅ 使用有序列表 "1. 2. 3." 或无序列表 "- " 组织回答
-- ✅ 引用条款时标注，如"根据第X条规定"
-- ❌ **严禁**：把不相关的内容（学分、分数、其他规定）塞进回答
-- ❌ **严禁**：复读参考资料中的无关内容
-- ❌ **严禁**：凑字数或无意义扩写
-
-### 回答结构：
-1. **核心回答**（1-2句话概括要点）
-2. **详细说明**（具体流程、条款、规定）
-3. **温馨提示**（如有注意事项）
-
-### 如果参考资料与问题完全无关：
-直接回复："抱歉，关于[问题]的具体规定，学生手册中未包含相关内容。建议您咨询辅导员或联系学生工作处获取准确信息。"
-
-请严格遵守以上规范回答问题。"""
+## 无法回答时：
+回复："关于这个问题，专业知识库中暂无相关内容。建议咨询专业负责人或教务处获取准确信息。"
+请严格遵守以上规范。"""
 
     def is_available(self) -> bool:
-        """检查 LLM 服务是否可用"""
         return bool(self.api_key)
 
-    async def chat(
-        self,
-        query: str,
-        context: str,
-        history: Optional[List[Dict]] = None
-    ) -> str:
-        """
-        与 LLM 进行对话
+    async def _request_with_retry(self, client, method, url, **kwargs):
+        last_error = None
+        for attempt in range(MAX_RETRIES):
+            try:
+                if method == "POST":
+                    response = await client.post(url, **kwargs)
+                else:
+                    response = await client.get(url, **kwargs)
+                if response.status_code == 429:
+                    delay = RETRY_DELAY_BASE * (2 ** attempt)
+                    logger.warning(f"LLM API 速率限制，{delay}s 后重试")
+                    await asyncio.sleep(delay); continue
+                if response.status_code >= 500:
+                    delay = RETRY_DELAY_BASE * (2 ** attempt)
+                    logger.warning(f"LLM API 错误 {response.status_code}，{delay}s 后重试")
+                    await asyncio.sleep(delay); continue
+                return response
+            except httpx.TimeoutException as e:
+                last_error = e; delay = RETRY_DELAY_BASE * (2 ** attempt)
+                logger.warning(f"LLM API 超时，{delay}s 后重试"); await asyncio.sleep(delay)
+            except httpx.ConnectError as e:
+                last_error = e; delay = RETRY_DELAY_BASE * (2 ** attempt)
+                logger.warning(f"LLM API 连接失败，{delay}s 后重试"); await asyncio.sleep(delay)
+            except Exception as e:
+                last_error = e; logger.error(f"LLM API 请求异常: {e}"); break
+        raise last_error or Exception("LLM API 请求失败，已达最大重试次数")
 
-        Args:
-            query: 用户查询
-            context: 知识库检索到的上下文
-            history: 对话历史
-
-        Returns:
-            LLM 生成的回复
-        """
-        if not self.is_available():
-            logger.warning("LLM API Key 未配置，使用规则回复")
-            return ""
-
-        # 构建消息列表
-        messages = [{"role": "system", "content": self.system_prompt}]
-
-        # 添加对话历史（最近几轮）
+    def _build_messages(self, query, context, history=None, system_prompt=None):
+        messages = [{"role": "system", "content": system_prompt or self.system_prompt}]
         if history:
-            for msg in history[-6:]:  # 最多保留最近3轮对话
+            for msg in history[-6:]:
                 role = "user" if msg.get("role") == "user" else "assistant"
-                messages.append({"role": role, "content": msg.get("content", "")})
-
-        # 构建用户消息（包含上下文）
+                content = msg.get("content", "")
+                if content:
+                    messages.append({"role": role, "content": content})
         if context:
-            user_message = f"""用户问题：{query}
-
-相关知识库内容：
-{context}
-
-请根据上述知识库内容回答用户的问题。"""
+            user_message = f"""## 用户问题：\n{query}\n\n## 参考资料：\n{context}\n\n请基于参考资料回答用户问题。只使用与问题相关的资料，忽略无关内容。"""
         else:
             user_message = query
-
         messages.append({"role": "user", "content": user_message})
+        return messages
 
+    async def chat(self, query, context="", history=None, system_prompt=None) -> str:
+        if not self.is_available():
+            return ""
+        messages = self._build_messages(query, context, history, system_prompt)
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.base_url}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": self.model,
-                        "messages": messages,
-                        "max_tokens": self.max_tokens,
-                        "temperature": self.temperature,
-                        "stream": False
-                    }
+                response = await self._request_with_retry(
+                    client, "POST", f"{self.base_url}/chat/completions",
+                    headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                    json={"model": self.model, "messages": messages,
+                          "max_tokens": self.max_tokens, "temperature": self.temperature, "stream": False}
                 )
-
                 if response.status_code != 200:
-                    logger.error(f"LLM API 调用失败: {response.status_code} - {response.text}")
-                    return ""
-
+                    logger.error(f"LLM API 失败: {response.status_code} - {response.text}"); return ""
                 result = response.json()
-                content = result["choices"][0]["message"]["content"]
-                logger.info(f"LLM 回复成功，长度: {len(content)}")
-                return content.strip()
-
-        except httpx.TimeoutException:
-            logger.error("LLM API 调用超时")
-            return ""
+                return result["choices"][0]["message"]["content"].strip()
         except Exception as e:
-            logger.error(f"LLM API 调用异常: {e}")
-            return ""
+            logger.error(f"LLM API 最终失败: {e}"); return ""
 
-    async def chat_stream(
+    async def chat_stream(self, query, context="", history=None, system_prompt=None) -> AsyncGenerator[str, None]:
+        if not self.is_available():
+            yield ""; return
+        messages = self._build_messages(query, context, history, system_prompt)
+        for attempt in range(MAX_RETRIES):
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    async with client.stream(
+                        "POST", f"{self.base_url}/chat/completions",
+                        headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                        json={"model": self.model, "messages": messages,
+                              "max_tokens": self.max_tokens, "temperature": self.temperature, "stream": True}
+                    ) as response:
+                        if response.status_code == 429 or response.status_code >= 500:
+                            delay = RETRY_DELAY_BASE * (2 ** attempt)
+                            logger.warning(f"LLM 流式错误 {response.status_code}，{delay}s 后重试")
+                            await asyncio.sleep(delay); continue
+                        if response.status_code != 200:
+                            yield ""; return
+                        async for line in response.aiter_lines():
+                            if line.startswith("data: "):
+                                data = line[6:]
+                                if data == "[DONE]": break
+                                try:
+                                    chunk = json.loads(data)
+                                    content = chunk["choices"][0].get("delta", {}).get("content", "")
+                                    if content: yield content
+                                except json.JSONDecodeError: continue
+                        return
+            except (httpx.TimeoutException, httpx.ConnectError) as e:
+                delay = RETRY_DELAY_BASE * (2 ** attempt)
+                logger.warning(f"LLM 流式异常，{delay}s 后重试: {e}")
+                await asyncio.sleep(delay)
+            except Exception as e:
+                logger.error(f"LLM 流式异常: {e}"); yield ""; return
+        yield ""
+
+
+llm_service = LLMService()
+
+
+try:
+    from config import (
+        OLLAMA_BASE_URL,
+        OLLAMA_MODEL,
+        OLLAMA_NUM_CTX,
+        LLM_MAX_TOKENS,
+        LLM_TEMPERATURE,
+        LLM_TIMEOUT,
+        AGENT_NAME,
+        AGENT_ROLE,
+    )
+except ImportError:
+    OLLAMA_BASE_URL = 'http://localhost:11434'
+    OLLAMA_MODEL = 'qwen2.5:7b-instruct-q4_K_M'
+    OLLAMA_NUM_CTX = 4096
+    LLM_MAX_TOKENS = 2048
+    LLM_TEMPERATURE = 0.7
+    LLM_TIMEOUT = 60.0
+    AGENT_NAME = 'AI Assistant'
+    AGENT_ROLE = 'AI Knowledge Assistant'
+
+logger = logging.getLogger(__name__)
+
+
+class OllamaLLMService:
+    """Ollama 本地 LLM 服务（GPU 加速）"""
+
+    def __init__(
+        self,
+        base_url: str = None,
+        model: str = None,
+        num_ctx: int = None,
+        max_tokens: int = None,
+        temperature: float = None,
+        timeout: float = None,
+    ):
+        self.base_url = (base_url or OLLAMA_BASE_URL).rstrip('/')
+        self.model = model or OLLAMA_MODEL
+        self.num_ctx = num_ctx or OLLAMA_NUM_CTX
+        self.max_tokens = max_tokens or LLM_MAX_TOKENS
+        self.temperature = temperature if temperature is not None else LLM_TEMPERATURE
+        self.timeout = timeout or LLM_TIMEOUT
+
+        self.system_prompt = f"""你是{AGENT_NAME}，安徽信息工程学院人工智能专业的AI问答助手。
+
+## 身份与职责：
+你专注于回答人工智能专业培养方案、专业课程教案、课程体系、实践教学等方面的问题。
+你的知识来源包括：培养方案文件、各门专业课教案（机器学习、深度学习、计算机视觉、Python数据分析、操作系统、数据库等）。
+
+## 回答规范：
+- 直接回答问题，不要说"根据提供的资料"等开场白
+- 使用 **加粗** 标记关键信息（课程名称、学分、学时、先修课程等）
+- 使用列表组织回答，层次清晰
+- 只使用与问题直接相关的参考资料，严禁塞入无关内容
+
+## 无法回答时：
+回复："关于这个问题，专业知识库中暂无相关内容。建议咨询专业负责人或教务处获取准确信息。"
+请严格遵守以上规范。"""
+
+    def is_available(self) -> bool:
+        """检查 Ollama 服务是否可用"""
+        try:
+            import httpx
+            resp = httpx.get(f"{self.base_url}/api/tags", timeout=5.0)
+            return resp.status_code == 200
+        except Exception:
+            return False
+
+    def _build_messages(
         self,
         query: str,
         context: str,
-        history: Optional[List[Dict]] = None
-    ) -> AsyncGenerator[str, None]:
-        """
-        流式对话（Streaming）
-
-        Args:
-            query: 用户查询
-            context: 知识库上下文
-            history: 对话历史
-
-        Yields:
-            逐字/逐词返回生成的内容
-        """
-        if not self.is_available():
-            logger.warning("LLM API Key 未配置")
-            yield ""
-            return
-
-        # 构建消息
+        history: Optional[List[Dict]] = None,
+    ) -> List[Dict]:
+        """构建 Ollama 格式的消息列表（兼容 chatml）。"""
         messages = [{"role": "system", "content": self.system_prompt}]
 
         if history:
             for msg in history[-6:]:
                 role = "user" if msg.get("role") == "user" else "assistant"
-                messages.append({"role": role, "content": msg.get("content", "")})
+                content = msg.get("content", "")
+                if content:
+                    messages.append({"role": role, "content": content})
 
         if context:
-            user_message = f"""用户问题：{query}
+            user_content = f"""## 用户问题：
+{query}
 
-相关知识库内容：
+## 参考资料：
 {context}
 
-请根据上述知识库内容回答用户的问题。"""
+请基于参考资料回答用户问题。只使用与问题相关的资料，忽略无关内容。"""
         else:
-            user_message = query
+            user_content = query
 
-        messages.append({"role": "user", "content": user_message})
+        messages.append({"role": "user", "content": user_content})
+        return messages
+
+    async def chat(
+        self,
+        query: str,
+        context: str = "",
+        history: Optional[List[Dict]] = None,
+        system_prompt: Optional[str] = None,
+    ) -> str:
+        """
+        非流式对话（Ollama /chat/completions 兼容接口）。
+
+        Falls back to /api/chat if available, else uses /api/generate.
+        """
+        messages = self._build_messages(query, context, history)
+        if system_prompt:
+            messages[0] = {"role": "system", "content": system_prompt}
+
+        # Try /api/chat first (structured chat API)
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/chat",
+                    json={
+                        "model": self.model,
+                        "messages": messages,
+                        "options": {
+                            "temperature": self.temperature,
+                            "num_predict": self.max_tokens,
+                            "num_ctx": self.num_ctx,
+                        },
+                        "stream": False,
+                    },
+                )
+                if response.status_code == 200:
+                    result = response.json()
+                    content = result.get("message", {}).get("content", "")
+                    logger.info(f"Ollama 回复成功，长度: {len(content)}")
+                    return content.strip()
+                logger.warning(f"Ollama /api/chat 失败: {response.status_code}")
+        except Exception as e:
+            logger.warning(f"Ollama /api/chat 异常: {e}")
+
+        # Fallback to /api/generate (legacy)
+        try:
+            prompt = self._messages_to_prompt(messages)
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "options": {
+                            "temperature": self.temperature,
+                            "num_predict": self.max_tokens,
+                            "num_ctx": self.num_ctx,
+                        },
+                        "stream": False,
+                    },
+                )
+                if response.status_code == 200:
+                    result = response.json()
+                    content = result.get("response", "")
+                    return content.strip()
+        except Exception as e:
+            logger.error(f"Ollama /api/generate 也失败: {e}")
+
+        return ""
+
+    async def chat_stream(
+        self,
+        query: str,
+        context: str = "",
+        history: Optional[List[Dict]] = None,
+        system_prompt: Optional[str] = None,
+    ) -> AsyncGenerator[str, None]:
+        """流式对话。"""
+        messages = self._build_messages(query, context, history)
+        if system_prompt:
+            messages[0] = {"role": "system", "content": system_prompt}
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 async with client.stream(
                     "POST",
-                    f"{self.base_url}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json"
-                    },
+                    f"{self.base_url}/api/chat",
                     json={
                         "model": self.model,
                         "messages": messages,
-                        "max_tokens": self.max_tokens,
-                        "temperature": self.temperature,
-                        "stream": True
-                    }
+                        "options": {
+                            "temperature": self.temperature,
+                            "num_predict": self.max_tokens,
+                            "num_ctx": self.num_ctx,
+                        },
+                        "stream": True,
+                    },
                 ) as response:
+                    if response.status_code != 200:
+                        logger.error(f"Ollama 流式失败: {response.status_code}")
+                        yield ""
+                        return
+
                     async for line in response.aiter_lines():
-                        if line.startswith("data: "):
-                            data = line[6:]
-                            if data == "[DONE]":
-                                break
+                        if line:
                             try:
-                                chunk = json.loads(data)
-                                delta = chunk["choices"][0].get("delta", {})
-                                content = delta.get("content", "")
+                                chunk = json.loads(line)
+                                content = chunk.get("message", {}).get("content", "")
                                 if content:
                                     yield content
                             except json.JSONDecodeError:
                                 continue
-
+                    return
         except Exception as e:
-            logger.error(f"LLM 流式调用异常: {e}")
+            logger.error(f"Ollama 流式异常: {e}")
             yield ""
 
+    def _messages_to_prompt(self, messages: List[Dict]) -> str:
+        """将消息列表转换为纯文本 prompt（用于 /generate）。"""
+        parts = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "system":
+                parts.append(f"<|system|>\n{content}")
+            elif role == "user":
+                parts.append(f"<|user|>\n{content}")
+            elif role == "assistant":
+                parts.append(f"<|assistant|>\n{content}")
+        parts.append("<|assistant|>")
+        return "\n".join(parts)
 
-# 全局 LLM 服务实例
-llm_service = LLMService()
+
+# 全局实例
+ollama_llm_service = OllamaLLMService()

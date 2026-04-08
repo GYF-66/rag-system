@@ -1,0 +1,105 @@
+home: E:\项目\人工智能专业培养rag系统\DeepScientist
+default_runner: codex
+default_locale: zh-CN
+daemon:
+  session_restore_on_start: true
+  max_concurrent_quests: 1
+  ack_timeout_ms: 1000
+ui:
+  host: 0.0.0.0
+  port: 20999
+  auto_open_browser: false
+  default_mode: web
+logging:
+  level: info
+  console: true
+  keep_days: 30
+git:
+  auto_checkpoint: true
+  auto_push: false
+  default_remote: origin
+  graph_formats:
+  - svg
+  - png
+  - json
+skills:
+  sync_global_on_init: true
+  sync_quest_on_create: true
+  sync_quest_on_open: true
+bootstrap:
+  codex_ready: true
+  codex_last_checked_at: '2026-04-05T14:44:36+00:00'
+  codex_last_result:
+    ok: true
+    summary: Codex startup probe completed.
+    warnings: []
+    errors: []
+    guidance: []
+    binary: codex
+    resolved_binary: C:\Users\GYF\AppData\Roaming\npm\codex.CMD
+    profile: ''
+    model: gpt-5.4
+    requested_model: gpt-5.4
+    effective_model: gpt-5.4
+    model_fallback_attempted: false
+    model_fallback_used: false
+    approval_policy: never
+    sandbox_mode: danger-full-access
+    reasoning_effort: xhigh
+    exit_code: 0
+    stdout_excerpt: '{"type":"thread.started","thread_id":"019d5e1a-52e7-7b53-af77-40460bff3a2a"}
+
+      {"type":"turn.started"}
+
+      {"type":"item.started","item":{"id":"item_0","type":"command_execution","command":"\"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\"
+      -Command \"Get-Content -Path ''C:\\\\Users\\\\GYF\\\\.agents\\\\skills\\\\using-superpowers\\\\SKILL.md''
+      -TotalCount 120\"","aggregated_output":"","exit_code":null,"status":"in_progress"}}
+
+      {"type":"item.completed","item":{"id":"item_0","type":"command_execution","command":"\"C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\"
+      -Command \"Get-Content -Path ''C:\\\\Users\\\\GYF\\\\.agents\\\\skills\\\\using-superpowers\\\\SKILL.md''
+      -TotalCount 120\"","aggregated_output":"---\r\nname: using-superpowers\r\ndescription:
+      Use when starting any conversation - establishes how to find and use skills,
+      requiring Skill tool invocation before ANY response including clarifying questions\r\n---\r\n\r\n<SUBAGENT-STOP>\r\nIf
+      you were dispatched as a subagent to execute a specific task, skip this skill.\r\n</SUBAGENT-STOP>\r\n\r\n<EXTREMELY-IMPORTANT>\r\nIf
+      you think there is even a 1% chance a skill might apply to what you…'
+    stderr_excerpt: "2026-04-05T14:44:36.697316Z  WARN codex_core::plugins::startup_sync:\
+      \ startup remote plugin sync failed; will retry on next app-server start error=chatgpt\
+      \ authentication required to sync remote plugins; api key auth is not supported\n\
+      2026-04-05T14:44:36.727100Z  WARN codex_core::shell_snapshot: Failed to create\
+      \ shell snapshot for powershell: Shell snapshot not supported yet for PowerShell\n\
+      2026-04-05T14:44:38.033088Z  WARN codex_core::plugins::manager: failed to warm\
+      \ featured plugin ids cache error=remote plugin sync request to https://chatgpt.com/backend-api/plugins/featured\
+      \ failed with status 403 Forbidden: <html>\n  <head>\n    <meta name=\"viewport\"\
+      \ content=\"width=device-width, initial-scale=1\" />\n    <style global>body{font-family:Arial,Helvetica,sans-serif}.container{align-items:center;display:flex;flex-direction:column;gap:2rem;height:100%;justify-content:center;width:100%}@keyframes\
+      \ enlarge-appear{0%{opacity:0;transform:scale(75%) rotate(-90deg)}to{opacity:1;transform:scale(100%)\
+      \ rotate(0deg)}}.logo{color:#8e8ea0}.scale-appear{animation:enlarge-appear .4s\
+      \ ease-out}@media (min-width:768px){.scale-appear{height:48px;width:48px}}.data:empty{display:none}.data{border-radius:5px;colo…"
+  locale_source: browser
+  locale_initialized_from_browser: true
+  locale_initialized_at: '2026-04-05T15:03:49.631Z'
+  locale_initialized_browser_locale: zh-CN
+connectors:
+  auto_ack: true
+  milestone_push: true
+  direct_chat_enabled: true
+  system_enabled:
+    qq: true
+    weixin: true
+    telegram: true
+    discord: false
+    slack: false
+    feishu: true
+    whatsapp: true
+    lingzhu: true
+cloud:
+  enabled: false
+  base_url: https://deepscientist.cc
+  token: null
+  token_env: DEEPSCIENTIST_TOKEN
+  verify_token_on_start: false
+  sync_mode: disabled
+acp:
+  compatibility_profile: deepscientist-acp-compat/v1
+  events_transport: rest-poll
+  sdk_bridge_enabled: false
+  sdk_module: acp

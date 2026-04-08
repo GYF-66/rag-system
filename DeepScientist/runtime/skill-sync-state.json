@@ -1,0 +1,46 @@
+{
+  "updated": true,
+  "installed_version": "1.5.15",
+  "previous_version": null,
+  "global_synced": true,
+  "existing_quests_synced": true,
+  "state_path": "E:\\项目\\人工智能专业培养rag系统\\DeepScientist\\runtime\\skill-sync-state.json",
+  "synced_at": "2026-04-05T14:44:53+00:00",
+  "global": {
+    "codex": [
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-analysis-campaign",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-baseline",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-decision",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-experiment",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-figure-polish",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-finalize",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-idea",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-intake-audit",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-optimize",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-rebuttal",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-review",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-scout",
+      "C:\\Users\\GYF\\.codex\\skills\\deepscientist-write"
+    ],
+    "claude": [
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-analysis-campaign.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-baseline.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-decision.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-experiment.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-figure-polish.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-finalize.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-idea.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-intake-audit.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-optimize.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-rebuttal.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-review.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-scout.md",
+      "C:\\Users\\GYF\\.claude\\agents\\deepscientist-write.md"
+    ],
+    "notes": []
+  },
+  "existing_quests": {
+    "count": 0,
+    "quests": []
+  }
+}

@@ -36,6 +36,8 @@ env/
 # 日志
 logs/
 *.log
+*-dev.err.log
+*-dev.out.log
 
 # 测试
 .pytest_cache/
@@ -53,6 +55,7 @@ coverage.xml
 .env
 .env.local
 .env.*.local
+frontend/.env
 
 # Node.js
 node_modules/
@@ -78,9 +81,36 @@ nul
 # Ignore IDE specific
 *.code-workspace
 
-# 知识库数据（保留结构但忽略大文件）
-# database/chroma_db/
+# 知识库数据（大文件不应提交到 Git）
+database/archive/
+database/rag_raw_text.txt
+database/chroma_db/
+database/*.backup
+database/*.pre_enhance_backup
+
+# 运行时产物
+output/*.png
+output/*.log
+output/*.pid
+output/*.cmd
+output/*.json
+cache/
+backend/cache/tfidf/
+
+# 会话数据（运行时生成）
+backend/data/
+
+# 临时脚本
+tmp_*.py
+temp_*.py
+temp_*.txt
 
 # Claude/Copilot
 .claude/
 .zcf/
+
+# Cursor
+.cursor/
+
+# Windows 保留设备名文件
+nul

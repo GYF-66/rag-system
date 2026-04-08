@@ -1,0 +1,25 @@
+codex:
+  enabled: true
+  binary: E:/项目/人工智能专业培养rag系统/scripts/codex_lansekafei_launcher/bin/Release/net8.0/codex_lansekafei_launcher.exe
+  config_dir: ~/.codex
+  profile: ''
+  model: inherit
+  model_reasoning_effort: high
+  approval_policy: never
+  sandbox_mode: danger-full-access
+  retry_on_failure: true
+  retry_max_attempts: 5
+  retry_initial_backoff_sec: 10.0
+  retry_backoff_multiplier: 6.0
+  retry_max_backoff_sec: 1800.0
+  mcp_tool_timeout_sec: 180000
+  env:
+    OPENAI_API_KEY: sk-VpY3z0rQt8P3WRzDwva0k5pSlxGk2MRJta9UpmfuBkVJh8Bn
+claude:
+  enabled: false
+  binary: claude
+  config_dir: ~/.claude
+  model: inherit
+  model_reasoning_effort: ''
+  env: {}
+  status: reserved_todo

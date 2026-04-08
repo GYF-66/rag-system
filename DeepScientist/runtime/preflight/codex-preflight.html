@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DeepScientist Codex check failed</title>
+    <style>
+      :root { color-scheme: light dark; font-family: Inter, system-ui, sans-serif; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(120% 80% at 10% 0%, rgba(210, 198, 180, 0.28), transparent 58%),
+          radial-gradient(80% 70% at 90% 10%, rgba(171, 186, 199, 0.24), transparent 55%),
+          linear-gradient(180deg, rgba(250,247,241,0.98), rgba(244,239,233,0.98));
+        color: #1f2937;
+      }
+      .page { max-width: 960px; margin: 0 auto; padding: 40px 20px 64px; }
+      .panel {
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 24px 80px -52px rgba(18, 24, 32, 0.35);
+        backdrop-filter: blur(18px);
+        padding: 28px;
+      }
+      h1 { margin: 0 0 12px; font-size: 28px; }
+      h2 { margin: 28px 0 10px; font-size: 16px; }
+      p, li { line-height: 1.7; }
+      .meta { color: #5b6472; font-size: 14px; }
+      .item { margin: 8px 0; padding-left: 12px; border-left: 2px solid transparent; }
+      .item--error { border-left-color: rgba(225, 72, 72, 0.55); color: #9f1d1d; }
+      .item--warn { border-left-color: rgba(217, 149, 42, 0.55); color: #8a5a00; }
+      pre {
+        margin: 0;
+        padding: 14px 16px;
+        overflow: auto;
+        border-radius: 18px;
+        background: rgba(15, 23, 42, 0.05);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .grid { display: grid; gap: 16px; }
+      @media (min-width: 860px) { .grid { grid-template-columns: 1fr 1fr; } }
+      .kv { margin: 0; }
+      .kv dt { font-size: 12px; color: #667085; text-transform: uppercase; letter-spacing: .08em; }
+      .kv dd { margin: 6px 0 0; font-size: 14px; word-break: break-all; }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="panel">
+        <h1>DeepScientist could not start Codex</h1>
+        <p class="meta">DeepScientist blocked startup because the Codex hello probe did not pass. In most installs, `npm install -g @researai/deepscientist` also installs the bundled Codex dependency. If `codex` is still missing, repair it with `npm install -g @openai/codex`. Then run `codex --login` (or `codex`), finish authentication, run `ds doctor`, and launch `ds` again.</p>
+        <p class="meta">DeepScientist 启动前进行了 Codex 可用性检查，但 hello 探测没有通过。正常情况下，`npm install -g @researai/deepscientist` 也会一并安装 bundled Codex 依赖；如果此后 `codex` 仍不可用，请再执行 `npm install -g @openai/codex` 修复。然后运行 `codex --login`（或 `codex`）完成认证，再执行 `ds doctor`，最后重新启动 `ds`。</p>
+
+        <h2>Summary</h2>
+        <p>Codex startup probe failed.</p>
+
+        <h2>Errors</h2><ul><li class="item item--error">Codex did not complete the startup hello probe successfully.</li><li class="item item--error">Run `codex --login` (or `codex`) once and complete login before starting DeepScientist.</li></ul>
+        
+        <h2>What to do next</h2><ul><li>Run `codex --login` (or `codex`) in a terminal and complete login or first-run setup.</li><li>If `codex` is missing, install it explicitly with `npm install -g @openai/codex`.</li><li>If the configured model is not available to your Codex account, update `~/DeepScientist/config/runners.yaml` and try again.</li><li>Then run `ds doctor` and start DeepScientist again.</li></ul>
+
+        <h2>Probe details</h2>
+        <div class="grid">
+          <dl class="kv">
+            <dt>Binary</dt>
+            <dd>codex</dd>
+          </dl>
+          <dl class="kv">
+            <dt>Resolved binary</dt>
+            <dd>C:\Users\GYF\AppData\Roaming\npm\codex.CMD</dd>
+          </dl>
+          <dl class="kv">
+            <dt>Model</dt>
+            <dd>gpt-5.4</dd>
+          </dl>
+          <dl class="kv">
+            <dt>Profile</dt>
+            <dd></dd>
+          </dl>
+          <dl class="kv">
+            <dt>Exit code</dt>
+            <dd>1</dd>
+          </dl>
+        </div>
+
+        <h2>Stdout</h2><pre>{&quot;type&quot;:&quot;thread.started&quot;,&quot;thread_id&quot;:&quot;019d5922-1249-7060-982a-8497fed185e8&quot;}
+{&quot;type&quot;:&quot;turn.started&quot;}
+{&quot;type&quot;:&quot;error&quot;,&quot;message&quot;:&quot;Missing environment variable: `OPENAI_API_KEY`.&quot;}
+{&quot;type&quot;:&quot;turn.failed&quot;,&quot;error&quot;:{&quot;message&quot;:&quot;Missing environment variable: `OPENAI_API_KEY`.&quot;}}</pre>
+        
+      </section>
+    </main>
+  </body>
+</html>

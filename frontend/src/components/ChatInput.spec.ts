@@ -1,42 +1,46 @@
-import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import ChatInput from '../ChatInput.vue'
+﻿import { mount } from '@vue/test-utils';
+
+import ChatInput from './ChatInput.vue';
 
 describe('ChatInput', () => {
-  it('should render correctly', () => {
+  it('renders placeholder text', () => {
     const wrapper = mount(ChatInput, {
-      props: {
-        disabled: false
-      }
-    })
-    expect(wrapper.exists()).toBe(true)
-  })
+      props: { placeholder: '请输入问题' },
+    });
 
-  it('should emit submit event when form is submitted', async () => {
-    const wrapper = mount(ChatInput, {
-      props: {
-        disabled: false
-      }
-    })
+    expect(wrapper.get('textarea').attributes('placeholder')).toBe('请输入问题');
+  });
 
-    const input = wrapper.find('textarea, input')
-    if (input.exists()) {
-      await input.setValue('测试消息')
-      await wrapper.find('form').trigger('submit')
-      expect(wrapper.emitted()).toHaveProperty('submit')
-    }
-  })
+  it('emits send with trimmed content when button is clicked', async () => {
+    const wrapper = mount(ChatInput);
 
-  it('should be disabled when disabled prop is true', () => {
-    const wrapper = mount(ChatInput, {
-      props: {
-        disabled: true
-      }
-    })
+    await wrapper.get('textarea').setValue('  测试消息  ');
+    await wrapper.get('button').trigger('click');
 
-    const button = wrapper.find('button[type="submit"]')
-    if (button.exists()) {
-      expect(button.attributes('disabled')).toBeDefined()
-    }
-  })
-})
+    expect(wrapper.emitted('send')).toEqual([['测试消息']]);
+    expect((wrapper.get('textarea').element as HTMLTextAreaElement).value).toBe('');
+  });
+
+  it('emits send on Enter but keeps newline behavior for Shift+Enter', async () => {
+    const wrapper = mount(ChatInput);
+    const textarea = wrapper.get('textarea');
+
+    await textarea.setValue('回车发送');
+    await textarea.trigger('keydown', { key: 'Enter', shiftKey: false, preventDefault: vi.fn() });
+
+    expect(wrapper.emitted('send')).toEqual([['回车发送']]);
+
+    await textarea.setValue('换行');
+    await textarea.trigger('keydown', { key: 'Enter', shiftKey: true, preventDefault: vi.fn() });
+
+    expect(wrapper.emitted('send')).toHaveLength(1);
+  });
+
+  it('disables sending when loading or disabled', () => {
+    const loadingWrapper = mount(ChatInput, { props: { loading: true } });
+    const disabledWrapper = mount(ChatInput, { props: { disabled: true } });
+
+    expect(loadingWrapper.get('button').attributes('disabled')).toBeDefined();
+    expect(disabledWrapper.get('textarea').attributes('disabled')).toBeDefined();
+  });
+});

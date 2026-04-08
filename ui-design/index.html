@@ -1,0 +1,302 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安信工AI小助手 - 人工智能专业智能助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        .font-inter {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-[#F3F3EE] min-h-screen font-inter text-slate-900 overflow-hidden">
+    <div class="flex h-screen">
+        <!-- 左侧侧边栏 -->
+        <aside class="w-16 lg:w-56 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+            <!-- 侧边栏头部 -->
+            <div class="p-4 border-b border-gray-200">
+                <!-- Logo -->
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-white">
+                        <img src="校徽.jpg" alt="安徽信息工程学院校徽" class="w-full h-full object-contain">
+                    </div>
+                    <span class="hidden lg:block text-sm font-semibold text-gray-900">安信工AI小助手</span>
+                </div>
+            </div>
+
+            <!-- 最近标签 -->
+            <div class="px-4 py-3 border-b border-gray-100">
+                <div class="flex items-center space-x-2">
+                    <div class="w-6 h-6 rounded bg-gray-100 flex items-center justify-center">
+                        <i class="fa-solid fa-book text-xs text-gray-600"></i>
+                    </div>
+                    <span class="hidden lg:block text-xs font-medium text-gray-500">最近</span>
+                </div>
+            </div>
+
+            <!-- 创建主题按钮 -->
+            <div class="px-2 py-3 border-b border-gray-100">
+                <button class="w-full flex items-center justify-center lg:justify-start space-x-2 px-2 py-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                    <i class="fa-solid fa-plus text-sm"></i>
+                    <span class="hidden lg:block text-xs">创建主题</span>
+                </button>
+            </div>
+
+            <!-- 侧边栏菜单 -->
+            <nav class="flex-1 py-2 overflow-y-auto">
+                <div class="space-y-0.5">
+                    <!-- 历史记录 -->
+                    <button class="w-full flex items-center justify-center lg:justify-start space-x-3 px-2 lg:px-4 py-2 text-gray-600 hover:bg-gray-50 transition-colors duration-200">
+                        <i class="fa-solid fa-clock-rotate-left text-sm"></i>
+                        <span class="hidden lg:block text-sm">历史记录</span>
+                    </button>
+
+                    <!-- 发现 -->
+                    <button class="w-full flex items-center justify-center lg:justify-start space-x-3 px-2 lg:px-4 py-2 text-gray-600 hover:bg-gray-50 transition-colors duration-200">
+                        <i class="fa-regular fa-compass text-sm"></i>
+                        <span class="hidden lg:block text-sm">发现</span>
+                    </button>
+
+                    <!-- 空间 -->
+                    <button class="w-full flex items-center justify-center lg:justify-start space-x-3 px-2 lg:px-4 py-2 text-gray-600 hover:bg-gray-50 transition-colors duration-200">
+                        <i class="fa-regular fa-folder text-sm"></i>
+                        <span class="hidden lg:block text-sm">空间</span>
+                    </button>
+
+                    <!-- 财务 -->
+                    <button class="w-full flex items-center justify-center lg:justify-start space-x-3 px-2 lg:px-4 py-2 text-gray-600 hover:bg-gray-50 transition-colors duration-200">
+                        <i class="fa-regular fa-credit-card text-sm"></i>
+                        <span class="hidden lg:block text-sm">财务</span>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- 底部更多选项 -->
+            <div class="p-2 border-t border-gray-200">
+                <button class="w-full flex items-center justify-center lg:justify-start space-x-3 px-2 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors duration-200">
+                    <i class="fa-solid fa-ellipsis text-sm"></i>
+                    <span class="hidden lg:block text-sm">更多</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- 主内容区域 -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- 顶部导航栏（简洁版） -->
+            <nav class="flex-shrink-0 h-14 bg-white border-b border-gray-200">
+                <div class="flex items-center justify-between h-full px-6">
+                    <!-- 左侧占位 -->
+                    <div class="flex items-center space-x-4">
+                        <span class="text-lg font-semibold text-gray-900">安信工AI小助手</span>
+                    </div>
+
+                    <!-- 右侧：通知 + 用户头像 -->
+                    <div class="flex items-center space-x-4">
+                        <button class="text-gray-600 hover:text-gray-900 transition-colors duration-200">
+                            <i class="fa-solid fa-bell text-lg"></i>
+                        </button>
+                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                            <span class="text-gray-700 font-medium text-xs">U</span>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- 内容区域 -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="flex flex-col items-center justify-center min-h-[calc(100vh-3rem)] px-4 py-8">
+                    <!-- 页面标题 -->
+                    <h1 class="text-gray-500 text-sm font-medium tracking-wider mb-10 uppercase">
+                        Ask anything
+                    </h1>
+
+                    <!-- 搜索框 -->
+                    <div class="w-full max-w-2xl">
+                        <div class="flex items-center bg-white rounded-full shadow-sm border border-gray-200 px-6 py-4 focus-within:border-blue-500 transition-all duration-300">
+                            <!-- 搜索输入框 -->
+                            <input
+                                id="searchInput"
+                                type="text"
+                                placeholder="询问任何事..."
+                                class="flex-1 text-lg text-gray-700 placeholder-gray-400 outline-none bg-transparent"
+                            >
+
+                            <!-- Focus按钮 -->
+                            <div class="ml-4 flex items-center space-x-2">
+                                <button
+                                    id="focusBtn"
+                                    type="button"
+                                    class="flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                >
+                                    <span class="mr-1">Focus</span>
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                                </button>
+                            </div>
+
+                            <!-- 文件附件图标 -->
+                            <button
+                                type="button"
+                                class="ml-2 w-8 h-8 rounded-lg hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center"
+                            >
+                                <i class="fa-solid fa-paperclip text-gray-500"></i>
+                            </button>
+
+                            <!-- 提交按钮 -->
+                            <button
+                                id="submitBtn"
+                                type="button"
+                                class="ml-3 w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors duration-200 disabled:opacity-40 disabled:hover:bg-gray-900"
+                                disabled
+                            >
+                                <i class="fa-solid fa-arrow-up text-white text-sm"></i>
+                            </button>
+                        </div>
+
+                        <!-- 快速启动建议 -->
+                        <div class="mt-8 flex flex-wrap justify-center gap-3">
+                            <button class="quick-action flex items-center px-4 py-2.5 bg-gray-100 rounded-full text-gray-700 hover:bg-gray-200 transition-colors duration-200 text-sm font-medium">
+                                <span class="mr-2">⚡</span>
+                                Pro 模式
+                            </button>
+                            <button class="quick-action flex items-center px-4 py-2.5 bg-gray-100 rounded-full text-gray-700 hover:bg-gray-200 transition-colors duration-200 text-sm font-medium">
+                                <span class="mr-2">📚</span>
+                                搜索学术
+                            </button>
+                            <button class="quick-action flex items-center px-4 py-2.5 bg-gray-100 rounded-full text-gray-700 hover:bg-gray-200 transition-colors duration-200 text-sm font-medium">
+                                <span class="mr-2">🎨</span>
+                                图像生成
+                            </button>
+                            <button class="quick-action flex items-center px-4 py-2.5 bg-gray-100 rounded-full text-gray-700 hover:bg-gray-200 transition-colors duration-200 text-sm font-medium">
+                                <span class="mr-2">💻</span>
+                                代码助手
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 底部信息 -->
+                    <div class="mt-16 text-center text-gray-500 text-sm">
+                        <p>使用 @ 提及和 / 使用快捷方式</p>
+                    </div>
+                </div>
+            </main>
+
+            <!-- 移动端底部导航 -->
+            <div class="lg:hidden flex-shrink-0 bg-white border-t border-gray-200">
+                <div class="flex justify-around py-3 px-4">
+                    <button
+                        class="flex flex-col items-center space-y-1 text-blue-600 font-medium transition-colors duration-200"
+                    >
+                        <div class="w-8 h-8">
+                            <i class="fa-solid fa-house text-xl"></i>
+                        </div>
+                        <span class="text-xs">Home</span>
+                    </button>
+                    <button
+                        class="flex flex-col items-center space-y-1 text-gray-500 hover:text-gray-900 transition-colors duration-200"
+                    >
+                        <div class="w-8 h-8">
+                            <i class="fa-regular fa-compass text-xl"></i>
+                        </div>
+                        <span class="text-xs">Discover</span>
+                    </button>
+                    <button
+                        class="flex flex-col items-center space-y-1 text-gray-500 hover:text-gray-900 transition-colors duration-200"
+                    >
+                        <div class="w-8 h-8">
+                            <i class="fa-solid fa-book text-xl"></i>
+                        </div>
+                        <span class="text-xs">Library</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script>
+        // 获取DOM元素
+        const searchInput = document.getElementById('searchInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const focusBtn = document.getElementById('focusBtn');
+        const quickActions = document.querySelectorAll('.quick-action');
+
+        // 更新提交按钮状态
+        function updateSubmitButton() {
+            if (searchInput.value.trim()) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-40');
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-40');
+            }
+        }
+
+        // 监听输入变化
+        searchInput.addEventListener('input', updateSubmitButton);
+
+        // 监听回车键
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && searchInput.value.trim()) {
+                handleSearch();
+            }
+        });
+
+        // 点击提交按钮
+        submitBtn.addEventListener('click', function() {
+            if (searchInput.value.trim()) {
+                handleSearch();
+            }
+        });
+
+        // 处理搜索
+        function handleSearch() {
+            const query = searchInput.value.trim();
+            if (query) {
+                console.log('搜索查询:', query);
+                // 这里可以添加实际的搜索逻辑
+                alert('搜索功能演示：' + query);
+            }
+        }
+
+        // Focus按钮点击事件
+        focusBtn.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            if (icon.classList.contains('fa-chevron-down')) {
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                this.classList.add('bg-blue-50', 'text-blue-700');
+                this.classList.remove('bg-gray-100', 'text-gray-700');
+            } else {
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+                this.classList.remove('bg-blue-50', 'text-blue-700');
+                this.classList.add('bg-gray-100', 'text-gray-700');
+            }
+        });
+
+        // 快速启动按钮点击事件
+        quickActions.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const label = this.textContent.trim();
+                searchInput.value = label;
+                searchInput.focus();
+                updateSubmitButton();
+            });
+        });
+
+        // 页面加载完成后自动聚焦输入框
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                searchInput.focus();
+            }, 300);
+        });
+    </script>
+</body>
+</html>
+

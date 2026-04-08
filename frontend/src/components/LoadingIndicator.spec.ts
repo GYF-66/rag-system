@@ -1,16 +1,17 @@
-import { describe, it, expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
-import LoadingIndicator from '../LoadingIndicator.vue'
+﻿import { mount } from '@vue/test-utils';
+
+import LoadingIndicator from './LoadingIndicator.vue';
 
 describe('LoadingIndicator', () => {
-  it('should render correctly', () => {
-    const wrapper = mount(LoadingIndicator)
-    expect(wrapper.exists()).toBe(true)
-  })
+  it('renders the robot avatar', () => {
+    const wrapper = mount(LoadingIndicator);
 
-  it('should contain loading animation', () => {
-    const wrapper = mount(LoadingIndicator)
-    // 检查是否有动画元素或 loading 相关类
-    expect(wrapper.html()).toContain('')
-  })
-})
+    expect(wrapper.find('.fa-robot').exists()).toBe(true);
+  });
+
+  it('renders three animated dots', () => {
+    const wrapper = mount(LoadingIndicator);
+
+    expect(wrapper.findAll('span')).toHaveLength(3);
+  });
+});

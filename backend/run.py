@@ -31,11 +31,12 @@ def start_server():
 
     try:
         import uvicorn
+        from config import API_HOST, API_PORT, API_RELOAD
         uvicorn.run(
             "main:app",
-            host="0.0.0.0",
-            port=8000,
-            reload=True
+            host=API_HOST,
+            port=API_PORT,
+            reload=API_RELOAD
         )
     except ImportError:
         print("错误: uvicorn未安装")

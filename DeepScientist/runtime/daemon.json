@@ -1,0 +1,11 @@
+{
+  "pid": 90484,
+  "host": "0.0.0.0",
+  "port": 20999,
+  "url": "http://127.0.0.1:20999",
+  "bind_url": "http://0.0.0.0:20999",
+  "log_path": "E:\\项目\\人工智能专业培养rag系统\\DeepScientist\\logs\\daemon.log",
+  "started_at": "2026-04-06T16:25:34.245Z",
+  "home": "E:\\项目\\人工智能专业培养rag系统\\DeepScientist",
+  "daemon_id": "3c64459a-fd4f-4d55-9dc2-7e41d6894a84"
+}

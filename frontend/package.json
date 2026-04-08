@@ -1,1 +1,83 @@
-{"name": "student-ai-frontend", "version": "1.0.0", "type": "module", "description": "学生手册智能助手 - Vue 3 前端", "scripts": {"dev": "vite", "build": "vue-tsc && vite build", "preview": "vite preview", "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore", "test": "vitest", "test:ci": "vitest run", "test:coverage": "vitest run --coverage"}, "dependencies": {"vue": "^3.4.21", "vue-router": "^4.3.0", "pinia": "^2.1.7", "@ai-sdk/vue": "^3.0.67", "ai": "^6.0.67"}, "devDependencies": {"@vitejs/plugin-vue": "^5.0.4", "vite": "^5.1.6", "vue-tsc": "^2.0.6", "typescript": "^5.4.2", "tailwindcss": "^3.4.1", "postcss": "^8.4.35", "autoprefixer": "^10.4.18", "@types/node": "^20.11.28", "vitest": "^2.0.0", "@vue/test-utils": "^2.4.0", "@vitest/coverage-v8": "^2.0.0", "jsdom": "^24.0.0"}}
+{
+  "name": "student-ai-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "人工智能专业智能助手 - Vue 3 前端",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+    "lint:check": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --ignore-path .gitignore",
+    "format": "prettier --write \"src/**/*.{js,ts,vue,json,css,scss,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,ts,vue,json,css,scss,md}\"",
+    "test": "vitest",
+    "test:ci": "vitest run",
+    "test:e2e": "node ./scripts/demo-acceptance.mjs",
+    "test:coverage": "vitest run --coverage",
+    "test:storybook": "vitest run --config vitest.storybook.config.ts",
+    "prepare": "husky",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "lint-staged": {
+    "*.{js,ts,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,scss,md}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@ai-sdk/vue": "^3.0.67",
+    "@tanstack/vue-query": "^5.92.9",
+    "@types/three": "^0.183.1",
+    "ai": "^6.0.67",
+    "dompurify": "^3.3.1",
+    "highlight.js": "^11.11.1",
+    "marked": "^17.0.3",
+    "pinia": "^2.1.7",
+    "three": "^0.183.2",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@chromatic-com/storybook": "^5.0.1",
+    "@storybook/addon-a11y": "^10.2.13",
+    "@storybook/addon-docs": "^10.2.13",
+    "@storybook/addon-onboarding": "^10.2.13",
+    "@storybook/addon-vitest": "^10.2.13",
+    "@storybook/vue3-vite": "^10.2.13",
+    "@types/dompurify": "^3.0.5",
+    "@types/node": "^20.11.28",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vitest/browser": "^2.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "@vue/test-utils": "^2.4.0",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-storybook": "^10.2.13",
+    "eslint-plugin-vue": "^9.33.0",
+    "husky": "^9.1.7",
+    "jsdom": "^24.0.0",
+    "lint-staged": "^16.3.0",
+    "playwright": "^1.58.2",
+    "postcss": "^8.4.35",
+    "prettier": "^3.8.1",
+    "rollup-plugin-visualizer": "^7.0.0",
+    "storybook": "^10.2.13",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.4.2",
+    "vite": "^5.1.6",
+    "vite-plugin-compression": "^0.5.1",
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^2.0.0",
+    "vue-tsc": "^2.0.6",
+    "workbox-window": "^7.4.0"
+  }
+}

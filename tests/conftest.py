@@ -2,10 +2,26 @@
 """
 测试配置和共享 fixtures
 """
+import sys
 import pytest
 import asyncio
 from pathlib import Path
 from typing import Dict, Any
+
+# 将 backend/ 加入 sys.path，使裸导入（from knowledge_base import ...）在测试中可用
+_backend_dir = str(Path(__file__).parent.parent / "backend")
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
+
+
+def pytest_configure(config):
+    """注册自定义 markers"""
+    config.addinivalue_line("markers", "unit: 单元测试")
+    config.addinivalue_line("markers", "integration: 集成测试")
+    config.addinivalue_line("markers", "slow: 慢速测试")
+    config.addinivalue_line("markers", "rag: RAG相关测试")
+    config.addinivalue_line("markers", "api: API相关测试")
+    config.addinivalue_line("markers", "database: 数据库相关测试")
 
 
 @pytest.fixture(scope="session")
@@ -27,7 +43,7 @@ def sample_knowledge_chunk():
     """示例知识块"""
     return {
         "id": "0",
-        "text": "根据学生手册规定，学生请假需要提前申请，病假需提供医院证明。",
+        "text": "根据人工智能专业培养方案规定，学生需完成规定的课程学分和实践环节。",
         "char_count": 35,
         "section": "学生管理篇",
         "similarity": 0.85
@@ -59,7 +75,7 @@ def sample_session_history():
 def mock_llm_response():
     """模拟 LLM 响应"""
     return {
-        "response": "根据学生手册，请假流程如下：\n1. 学生需要提前向辅导员提交请假申请\n2. 病假需提供医院证明\n3. 请假时间超过3天需经学院批准",
+        "response": "根据培养方案，人工智能专业课程体系包括：\n1. 专业基础课程（数学、程序设计）\n2. 专业核心课程（机器学习、深度学习）\n3. 实践环节（毕业设计、实习）",
         "sources": [],
         "used_llm": True
     }
@@ -110,16 +126,3 @@ def temp_knowledge_base(test_data_dir):
     # 清理
     if kb_file.exists():
         kb_file.unlink()
-
-
-# 标记定义
-pytest_configure = pytest.mark.configure(
-    markers=[
-        pytest.mark.unit("单元测试"),
-        pytest.mark.integration("集成测试"),
-        pytest.mark.slow("慢速测试"),
-        pytest.mark.rag("RAG相关测试"),
-        pytest.mark.api("API相关测试"),
-        pytest.mark.database("数据库相关测试"),
-    ]
-)

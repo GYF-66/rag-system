@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 知识库模块测试
 """
@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch, MagicMock
 @pytest.mark.unit
 def test_knowledge_base_load():
     """测试知识库加载"""
-    from backend.knowledge_base import KnowledgeBase
+    from backend.retrieval.knowledge_base import KnowledgeBase
 
     kb = KnowledgeBase()
     assert kb is not None
@@ -18,7 +18,7 @@ def test_knowledge_base_load():
 @pytest.mark.unit
 def test_knowledge_base_search():
     """测试知识库搜索"""
-    from backend.knowledge_base import KnowledgeBase
+    from backend.retrieval.knowledge_base import KnowledgeBase
 
     kb = KnowledgeBase()
 
@@ -32,7 +32,7 @@ def test_knowledge_base_search():
 @pytest.mark.unit
 def test_knowledge_base_search_empty_query():
     """测试空查询处理"""
-    from backend.knowledge_base import KnowledgeBase
+    from backend.retrieval.knowledge_base import KnowledgeBase
 
     kb = KnowledgeBase()
 
@@ -43,7 +43,7 @@ def test_knowledge_base_search_empty_query():
 @pytest.mark.unit
 def test_knowledge_base_search_special_chars():
     """测试特殊字符查询"""
-    from backend.knowledge_base import KnowledgeBase
+    from backend.retrieval.knowledge_base import KnowledgeBase
 
     kb = KnowledgeBase()
 
@@ -54,7 +54,7 @@ def test_knowledge_base_search_special_chars():
 @pytest.mark.unit
 def test_knowledge_base_chunk_format():
     """测试知识块格式"""
-    from backend.knowledge_base import KnowledgeBase
+    from backend.retrieval.knowledge_base import KnowledgeBase
 
     kb = KnowledgeBase()
 

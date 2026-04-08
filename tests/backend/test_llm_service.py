@@ -26,16 +26,17 @@ def test_llm_service_has_required_methods():
     assert hasattr(service, "generate") or hasattr(service, "chat") or hasattr(service, "complete")
 
 
-@pytest.mark.asyncio
-async def test_llm_service_generate_mock():
+@pytest.mark.unit
+def test_llm_service_generate_mock():
     """测试 LLM 生成 (Mock)"""
+    import asyncio
     from backend.llm_service import LLMService
 
-    with patch.object(LLMService, 'generate', new_callable=AsyncMock) as mock_generate:
-        mock_generate.return_value = "这是测试回复"
+    with patch.object(LLMService, 'chat', new_callable=AsyncMock) as mock_chat:
+        mock_chat.return_value = "这是测试回复"
 
         service = LLMService()
-        result = await service.generate("测试问题")
+        result = asyncio.run(service.chat(query="测试问题", context="", session_history=[]))
 
         assert result == "这是测试回复"
 
@@ -43,7 +44,9 @@ async def test_llm_service_generate_mock():
 @pytest.mark.unit
 def test_llm_service_config():
     """测试 LLM 服务配置"""
-    from backend.config import settings
+    from backend import config
 
     # 确保配置项存在
-    assert hasattr(settings, 'LLM_API_KEY') or hasattr(settings, 'llm_api_key')
+    assert hasattr(config, 'LLM_API_KEY')
+    assert hasattr(config, 'LLM_API_BASE_URL')
+    assert hasattr(config, 'LLM_MODEL')

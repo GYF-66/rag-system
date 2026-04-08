@@ -1,0 +1,153 @@
+﻿[
+  {
+    "id": "program_training_goal",
+    "query": "人工智能专业培养目标是什么？",
+    "relevant_document_keywords": ["培养方案", "c2022版本科人才培养方案0726"],
+    "relevant_section_keywords": ["培养目标"],
+    "relevant_chunk_types": ["program_spec"],
+    "must_include_terms": ["培养", "能力"]
+  },
+  {
+    "id": "program_curriculum",
+    "query": "人工智能专业核心课程与课程体系怎么安排？",
+    "relevant_document_keywords": ["培养方案", "c2022版本科人才培养方案0726"],
+    "relevant_section_keywords": ["课程体系", "核心课程"],
+    "relevant_chunk_types": ["program_spec"]
+  },
+  {
+    "id": "program_credit",
+    "query": "人工智能专业毕业学分要求是多少？",
+    "relevant_document_keywords": ["培养方案", "c2022版本科人才培养方案0726"],
+    "relevant_section_keywords": ["学分", "毕业要求"],
+    "relevant_chunk_types": ["program_spec"],
+    "must_include_terms": ["学分"]
+  },
+  {
+    "id": "program_practice",
+    "query": "人工智能专业实践教学和毕业设计如何安排？",
+    "relevant_document_keywords": ["培养方案", "c2022版本科人才培养方案0726"],
+    "relevant_section_keywords": ["实践教学", "毕业设计"],
+    "relevant_chunk_types": ["program_spec", "course_outline"]
+  },
+  {
+    "id": "course_ml_outline",
+    "query": "机器学习基础课程主要讲哪些教学内容？",
+    "relevant_document_keywords": ["机器学习基础"],
+    "relevant_section_keywords": ["教学内容", "课程目标"],
+    "relevant_chunk_types": ["course_outline"]
+  },
+  {
+    "id": "course_python_assessment",
+    "query": "数据处理与分析（Python）课程如何考核？",
+    "relevant_document_keywords": ["数据处理与分析", "python"],
+    "relevant_section_keywords": ["考核", "成绩"],
+    "relevant_chunk_types": ["course_outline"]
+  },
+  {
+    "id": "course_database_practice",
+    "query": "数据库原理与应用课程有哪些实验或实践要求？",
+    "relevant_document_keywords": ["数据库原理与应用"],
+    "relevant_section_keywords": ["实验", "实践", "教学内容"],
+    "relevant_chunk_types": ["course_outline"]
+  },
+  {
+    "id": "course_os_goal",
+    "query": "操作系统原理课程目标是什么？",
+    "relevant_document_keywords": ["操作系统原理"],
+    "relevant_section_keywords": ["课程目标", "教学目标"],
+    "relevant_chunk_types": ["course_outline"]
+  },
+  {
+    "id": "course_cv_content",
+    "query": "计算机视觉应用开发基础课程包含哪些内容？",
+    "relevant_document_keywords": ["计算机视觉应用开发基础"],
+    "relevant_section_keywords": ["教学内容", "课程内容"],
+    "relevant_chunk_types": ["course_outline"]
+  },
+  {
+    "id": "course_java_assessment",
+    "query": "面向对象Java课程的教学安排或考核要求有哪些？",
+    "relevant_document_keywords": ["面向对象java"],
+    "relevant_section_keywords": ["教学安排", "考核", "课程目标"],
+    "relevant_chunk_types": ["course_outline"]
+  },
+  {
+    "id": "manual_scholarship_requirements",
+    "query": "奖学金申请条件有哪些？",
+    "relevant_document_keywords": ["学生手册"],
+    "relevant_section_keywords": ["奖学金", "申请条件"],
+    "must_include_terms": ["申请", "条件"],
+    "acceptable_terms": ["成绩", "综合测评"]
+  },
+  {
+    "id": "manual_scholarship_materials",
+    "query": "申请奖学金需要提交哪些材料？",
+    "relevant_document_keywords": ["学生手册"],
+    "relevant_section_keywords": ["奖学金", "申请材料"],
+    "must_include_terms": ["材料"],
+    "acceptable_terms": ["申请表", "证明"]
+  },
+  {
+    "id": "manual_major_transfer",
+    "query": "转专业的申请流程和条件是什么？",
+    "relevant_document_keywords": ["学生手册"],
+    "relevant_section_keywords": ["转专业", "申请流程"],
+    "must_include_terms": ["申请"],
+    "acceptable_terms": ["条件", "审核"]
+  },
+  {
+    "id": "manual_leave_policy",
+    "query": "学生请假一般要遵循什么规定？",
+    "relevant_document_keywords": ["学生手册"],
+    "relevant_section_keywords": ["请假", "管理"],
+    "acceptable_terms": ["审批", "销假"]
+  },
+  {
+    "id": "program_graduation_requirements",
+    "query": "人工智能专业毕业要求强调哪些能力？",
+    "relevant_document_keywords": ["培养方案"],
+    "relevant_section_keywords": ["毕业要求"],
+    "relevant_chunk_types": ["program_spec"],
+    "acceptable_terms": ["能力", "素养"]
+  },
+  {
+    "id": "program_practice_ratio",
+    "query": "培养方案里实践教学占比或实践学分怎么体现？",
+    "relevant_document_keywords": ["培养方案"],
+    "relevant_section_keywords": ["实践教学", "学分"],
+    "relevant_chunk_types": ["program_spec"],
+    "must_include_terms": ["实践"],
+    "acceptable_terms": ["学分", "环节"]
+  },
+  {
+    "id": "course_nlp_content",
+    "query": "自然语言处理课程主要讲什么内容？",
+    "relevant_document_keywords": ["自然语言处理"],
+    "relevant_section_keywords": ["教学内容", "课程内容"],
+    "relevant_chunk_types": ["course_outline"]
+  },
+  {
+    "id": "course_bigdata_assessment",
+    "query": "大数据技术基础课程怎么考核？",
+    "relevant_document_keywords": ["大数据技术基础"],
+    "relevant_section_keywords": ["考核", "成绩"],
+    "relevant_chunk_types": ["course_outline"],
+    "acceptable_terms": ["平时成绩", "考试"]
+  },
+  {
+    "id": "course_api_technical",
+    "query": "API 接口开发相关课程一般对应哪些教学内容？",
+    "relevant_document_keywords": ["python", "java", "数据库", "web"],
+    "relevant_section_keywords": ["教学内容", "课程内容"],
+    "acceptable_terms": ["接口", "开发", "程序设计"]
+  },
+  {
+    "id": "program_curriculum_structure",
+    "query": "课程体系通常由哪些模块构成？",
+    "relevant_document_keywords": ["培养方案"],
+    "relevant_section_keywords": ["课程体系"],
+    "relevant_chunk_types": ["program_spec"],
+    "must_include_terms": ["课程体系"],
+    "acceptable_terms": ["模块", "构成"]
+  }
+]

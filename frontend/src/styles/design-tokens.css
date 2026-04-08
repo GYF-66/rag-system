@@ -1,0 +1,88 @@
+/**
+ * 公共前台设计令牌
+  * 统一登录、注册、Discover 与 Manual 的校园黄昏视觉语言。
+   */
+   
+:root {
+  color-scheme: light;
+  
+  --font-body: 'Source Han Sans SC', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+    --font-display: 'STZhongsong', 'Songti SC', 'Noto Serif SC', 'Source Han Serif SC', Georgia, serif;
+    
+  --campus-sky: #f8efe7;
+     --campus-sky-strong: #efc2a8;
+        --campus-cloud: #fff8f2;
+           --campus-mist: rgba(255, 248, 240, 0.78);
+             --campus-lawn: #d8c37c;
+                --campus-lawn-deep: #b49d58;
+                   --campus-earth: #6d4f43;
+                      --campus-ink: #241918;
+                         --campus-text: #312421;
+                            --campus-text-soft: #665348;
+                               --campus-text-muted: #8c7465;
+                                
+   --campus-accent: #ae5c3f;
+      --campus-accent-strong: #8f452f;
+         --campus-accent-deep: #6e3324;
+            --campus-accent-soft: #efd5c3;
+               --campus-highlight: #f6ddb9;
+                  --campus-success: #6f8b58;
+                     --campus-danger: #b55243;
+                      
+   --campus-panel: rgba(255, 249, 243, 0.8);
+     --campus-panel-strong: rgba(255, 251, 247, 0.92);
+       --campus-panel-solid: #fff9f4;
+          --campus-panel-dark: rgba(70, 49, 44, 0.9);
+            --campus-panel-dark-soft: rgba(88, 63, 55, 0.78);
+              --campus-border: rgba(130, 88, 66, 0.16);
+                --campus-border-strong: rgba(130, 88, 66, 0.28);
+                  --campus-border-contrast: rgba(130, 88, 66, 0.42);
+                  
+  --campus-shadow: 0 24px 80px rgba(91, 61, 48, 0.15);
+    --campus-shadow-soft: 0 18px 46px rgba(91, 61, 48, 0.1);
+      --campus-shadow-deep: 0 36px 96px rgba(48, 31, 28, 0.22);
+        --campus-glow: 0 0 0 4px rgba(174, 92, 63, 0.12);
+          --campus-glow-strong: 0 0 0 6px rgba(174, 92, 63, 0.18);
+          
+  --campus-radius-xl: 32px;
+    --campus-radius-lg: 24px;
+      --campus-radius-md: 18px;
+        --campus-radius-sm: 14px;
+          --campus-pill: 999px;
+          
+  --campus-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --campus-duration-fast: 180ms;
+      --campus-duration-normal: 260ms;
+        --campus-duration-slow: 420ms;
+        
+  --primary: var(--campus-accent);
+    --primary-hover: var(--campus-accent-strong);
+      --accent: var(--campus-earth);
+        --accent-hover: #5a3f36;
+         
+   --bg-page: #f8f1eb;
+      --bg-page-gradient: radial-gradient(circle at top, rgba(255, 241, 226, 0.82) 0%, rgba(248, 239, 231, 0.94) 24%, rgba(242, 232, 222, 0.98) 58%, #ede0d2 100%);
+        --bg-white: #ffffff;
+           --bg-surface: var(--campus-panel);
+             --bg-surface-hover: rgba(174, 92, 63, 0.08);
+               --bg-elevated: var(--campus-panel-strong);
+               
+  --text-primary: var(--campus-text);
+    --text-secondary: var(--campus-text-soft);
+      --text-tertiary: var(--campus-text-muted);
+        --text-muted: rgba(140, 116, 101, 0.74);
+          --text-inverse: #fff8f2;
+           
+   --border-color: var(--campus-border);
+     --border-hover: var(--campus-border-strong);
+       --shadow-sm: 0 10px 24px rgba(91, 61, 48, 0.08);
+         --shadow-md: var(--campus-shadow-soft);
+           --shadow-lg: var(--campus-shadow);
+             --shadow-xl: var(--campus-shadow-deep);
+             }
+             
+::selection {
+  background: rgba(174, 92, 63, 0.18);
+    color: var(--campus-text);
+    }
+    

@@ -1,0 +1,59 @@
+# RAG 优化实验记录
+
+## 列说明
+- 时间
+- 实验目的
+- 改动项
+- 数据集
+- Recall@5
+- MRR
+- Faithfulness
+- Hallucination Rate
+- Latency (ms)
+- 结论
+
+## ChromaDB 修复后评测结果（2026-03-29，GPU 模式）
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| Precision@1 | **0.20** | 4/20 命中 top1 |
+| Precision@3 | 0.1333 | - |
+| Recall@10 | **0.1866** | ~19% 召回（+128%） |
+| MRR | **0.2583** | +353% |
+| nDCG@3 | 0.1572 | - |
+| Irrelevant Rate | 90% | 仍偏高，测试用例关键词设计过严 |
+| Latency (avg) | 893 ms | GPU 模式 |
+
+**关键发现**：
+- ChromaDB rebuild 后 P@1 +300%，R@10 +228%，MRR +353%
+- 剩余 90% irrelevant rate 根因：测试用例 `relevant_document_keywords` 包含版本号（`c2022版本科...`），导致 c2018 文档被误判
+- 4/20 用例有明显命中：`program_training_goal`(MRR=1.0), `program_graduation_requirements`(MRR=1.0), `program_curriculum`(MRR=1.0), `course_ml_outline`(MRR=1.0)
+- Ollama qwen2.5:7b-instruct-q4_K_M 已部署成功，`OllamaLLMService` 工作正常
+
+**下一步**：
+1. ~~修复 KB ingestion 编码问题 → 重新索引~~ ✅ 已修复
+1. ~~修复 KB ingestion 编码问题 → 重新索引~~ ✅ 已修复
+2. ~~集成 Ollama 到 agent_v2.py 生成链路~~ ✅ 已完成，端到端验证通过
+3. 优化测试用例关键词（放宽版本限制 OR 增补同义词）
+4. 查询改写验证（HyDE / 多查询扩展）
+5. CRAG 阈值调优（当前 quality_score=0.905，可尝试放宽以增强拒答）
+
+## GPU 基准测试（2026-03-29）
+
+| 环境 | 模型 | 任务 | 延迟 | 加速比 |
+|------|------|------|------|--------|
+| RTX 5070 Laptop (8GB) | BAAI/bge-m3 | Embedding (20文本) | GPU: 37ms vs CPU: 193ms | **5.2x** |
+| RTX 5070 Laptop (8GB) | all-MiniLM-L6-v2 | Embedding (20文本) | GPU: 13ms vs CPU: 28ms | **2.2x** |
+| RTX 5070 Laptop (8GB) | BAAI/bge-reranker-base | Rerank (20 doc) | GPU: 20ms vs CPU: 128ms | **6.4x** |
+| RTX 5070 Laptop (8GB) | Matmul 1024x1024 | 计算基准 | 0.21 ms (x10) | - |
+
+## 实验记录
+
+| 时间 | 实验目的 | 改动项 | 数据集 | Recall@5 | MRR | Faithfulness | Hallucination Rate | Latency (ms) | 结论 |
+|------|----------|--------|--------|---------|-----|--------------|---------------------|--------------|------|
+| 2026-03-29 | 缓存阈值调优 | 缓存阈值 0.95→0.88，CRAG 阈值外露 | - | - | - | - | - | - | 待验证 |
+| 2026-03-29 | GPU 加速 Embedding | `LazyEmbeddingFunction` + CrossEncoder CUDA | - | - | - | - | - | - | Embedding GPU 7.8ms/10文本 |
+| 2026-03-29 | 本地 LLM 推理 | 新增 `OllamaLLMService`，支持 qwen2.5:7b-q4 | - | - | - | - | - | - | 待安装 ollama |
+| 2026-03-29 | Ollama 集成到 agent_v2 | `LLM_PROVIDER='ollama'` + `get_llm_service()` 路由 + agent_v2.py 端到端验证 | 实时对话 | - | - | - | - | - | Ollama qwen2.5:7b 生成正常，CRAG quality=0.905，混合检索工作正常 |
+| 2026-03-29 | ChromaDB rebuild + relevance逻辑 | rebuild_chromadb_index.py 修复（add_documents/reset）+ _is_relevant OR逻辑 | 20条测试用例 | 0.1866 | 0.2583 | - | - | 893ms | ChromaDB编码修复后 P@1:0.05→0.20，R@10:0.057→0.187 |
+| 2026-03-29 | 本地 LLM 部署验证 | Ollama qwen2.5:7b-instruct-q4_K_M | - | - | - | - | - | - | OllamaLLMService 工作正常，模型响应正常 |

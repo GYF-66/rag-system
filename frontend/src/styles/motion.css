@@ -1,0 +1,110 @@
+:root {
+  --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-emphasis: cubic-bezier(0.2, 0.95, 0.15, 1);
+  --motion-duration-fast: 180ms;
+  --motion-duration-base: 320ms;
+  --motion-duration-slow: 680ms;
+  --motion-duration-scene: 14s;
+  --motion-duration-cloud: 24s;
+  --motion-duration-tree: 7s;
+  --motion-duration-glow: 6s;
+  --motion-hover-lift: -6px;
+  --motion-hover-scale: 1.015;
+  --motion-card-delay-step: 90ms;
+  --motion-scene-strength: 1;
+  --motion-scene-scroll-depth: 1;
+  --motion-reveal-distance: 24px;
+  --motion-reveal-scale: 0.985;
+  --motion-nav-blur: 16px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --motion-duration-scene: 18s;
+    --motion-duration-cloud: 28s;
+    --motion-duration-tree: 9s;
+    --motion-hover-lift: -3px;
+    --motion-scene-strength: 0.55;
+    --motion-scene-scroll-depth: 0.45;
+    --motion-reveal-distance: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 1ms;
+    --motion-duration-base: 1ms;
+    --motion-duration-slow: 1ms;
+    --motion-duration-scene: 1ms;
+    --motion-duration-cloud: 1ms;
+    --motion-duration-tree: 1ms;
+    --motion-duration-glow: 1ms;
+    --motion-hover-lift: 0px;
+    --motion-hover-scale: 1;
+    --motion-reveal-distance: 0px;
+    --motion-reveal-scale: 1;
+    --motion-scene-strength: 0;
+    --motion-scene-scroll-depth: 0;
+  }
+}
+
+.reveal-item {
+  opacity: 0;
+  transform: translate3d(0, var(--motion-reveal-distance), 0) scale(var(--motion-reveal-scale));
+  transition:
+    opacity var(--motion-duration-slow) var(--motion-ease-standard),
+    transform var(--motion-duration-slow) var(--motion-ease-standard),
+    filter var(--motion-duration-slow) var(--motion-ease-standard);
+  transition-delay: var(--reveal-delay, 0ms);
+  filter: blur(10px);
+  will-change: opacity, transform;
+}
+
+.reveal-item.is-revealed {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
+}
+
+.stagger-grid > * {
+  --reveal-delay: calc(var(--reveal-index, 0) * var(--motion-card-delay-step));
+}
+
+.magnetic-card,
+.glow-hover,
+.lift-hover {
+  transition:
+    transform var(--motion-duration-base) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-base) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) ease,
+    background-color var(--motion-duration-fast) ease;
+  will-change: transform;
+}
+
+.magnetic-card:hover,
+.glow-hover:hover,
+.lift-hover:hover {
+  transform: translate3d(0, var(--motion-hover-lift), 0) scale(var(--motion-hover-scale));
+}
+
+.glow-hover:hover {
+  box-shadow:
+    0 24px 60px rgba(79, 48, 36, 0.16),
+    0 0 0 1px rgba(197, 132, 83, 0.14),
+    0 0 28px rgba(214, 182, 115, 0.14);
+}
+
+.scene-divider {
+  position: relative;
+}
+
+.scene-divider::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 88px;
+  background: linear-gradient(180deg, rgba(243, 235, 225, 0), rgba(243, 235, 225, 0.98));
+  pointer-events: none;
+}

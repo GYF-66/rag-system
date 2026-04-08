@@ -1,0 +1,167 @@
+# RAG 系统架构分析与教育化转型方案
+
+## 一、当前 RAG 系统架构分析
+
+### 1. 整体 Pipeline 架构
+
+```mermaid
+graph TD
+    A["PDF 文档<br/>培养方案 + 教案"] --> B["pdf_corpus_builder.py<br/>PDF 解析 + 结构提取"]
+    B --> C["unified_chunker.py<br/>结构化分块<br/>(680字/块, 120字重叠)"]
+    C --> D1["JSON 知识库<br/>rag_knowledge_base.json"]
+    C --> D2["ChromaDB 向量库<br/>BGE-small-zh-v1.5"]
+    
+    E["用户查询"] --> F["query_rewriter.py<br/>规则查询改写<br/>+ 同义词扩展"]
+    F --> G["hybrid_retriever.py<br/>混合检索 + RRF 融合"]
+    
+    D1 --> H["knowledge_base.py<br/>BM25/TF-IDF 关键词检索"]
+    D2 --> I["chroma_knowledge_base.py<br/>向量语义检索"]
+    
+    H --> G
+    I --> G
+    
+    G --> J["reranker.py<br/>规则重排序<br/>+ 可选 Cross-Encoder"]
+    J --> K["reasoning_rag.py<br/>多步推理检索<br/>+ 思考过程"]
+    K --> L["cross_retrieval_engine.py<br/>交叉检索引擎<br/>(隐含关联问题)"]
+    L --> M["agent.py<br/>流水线调度<br/>上下文构建"]
+    M --> N["llm_service.py<br/>DeepSeek/Qwen<br/>流式生成"]
+    N --> O["用户回答"]
+```
+
+### 2. 各模块技术方法详解
+
+| 模块 | 文件 | 技术方法 | 说明 |
+|------|------|----------|------|
+| **文档解析** | [pdf_corpus_builder.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/indexing/pdf_corpus_builder.py) | PDFPlumber + 正则标题提取 | 从 PDF 提取文本，按章节结构组织 |
+| **分块策略** | [unified_chunker.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/chunking/unified_chunker.py) | 结构化分块 (680字/120字重叠) | 基于标题层级的语义分块，支持句子完整性 |
+| **文本清洗** | [professional_cleaning_pipeline.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/indexing/professional_cleaning_pipeline.py) | 噪声过滤 + 目录/页码去除 | 去除低质量内容(目录、页码、版权信息) |
+| **向量存储** | [chroma_knowledge_base.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/chroma_knowledge_base.py) | ChromaDB + HNSW 索引 | cosine 相似度，懒加载 Embedding 模型 |
+| **Embedding** | [LazyEmbeddingFunction](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/chroma_knowledge_base.py#25-53) | `BAAI/bge-small-zh-v1.5` (384维) | 中文专用小型嵌入模型 |
+| **关键词检索** | [knowledge_base.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/knowledge_base.py) | TF-IDF + BM25 + jieba | 传统稀疏检索，元数据加权 |
+| **混合检索** | [hybrid_retriever.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/hybrid_retriever.py) | 向量 0.7 + 关键词 0.3 + RRF 融合 | 自适应权重，并行检索，查询变体扩展 |
+| **查询改写** | [query_rewriter.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/query_rewriter.py) | 规则 + 意图检测 + 同义词 | 纯规则，无 LLM 参与 |
+| **重排序** | [reranker.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/reranker.py) | 规则特征加权 (7维特征) | 可选 `bge-reranker-base` Cross-Encoder |
+| **推理检索** | [reasoning_rag.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/reasoning_rag.py) | 多步检索 (直接→扩展→上下文) | 输出思考过程 (Thinking Process) |
+| **交叉检索** | [cross_retrieval_engine.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/cross_retrieval_engine.py) | 正则模式匹配 + 多文档关联 | 处理隐含关联问题(如"培养方案如何关联规章制度") |
+| **智能体** | [agent.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/agent.py) | 检索→清洗→上下文→生成 | 流水线编排，连续块合并，上下文长度控制 |
+| **LLM 生成** | [llm_service.py](file:///e:/%E9%A1%B9%E7%9B%AE/%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD%E4%B8%93%E4%B8%9A%E5%9F%B9%E5%85%BBrag%E7%B3%BB%E7%BB%9F/backend/llm_service.py) | Qwen-Plus / DeepSeek API | OpenAI 兼容 API，流式生成，重试机制 |
+
+### 3. 当前系统的优点
+
+1. **混合检索架构完善** - 向量 + 关键词双通道，RRF 融合，自适应权重
+2. **推理过程透明** - Reasoning-RAG 输出思考过程，增强可解释性
+3. **交叉检索创新** - 能处理跨文档隐含关联问题
+4. **工程化程度高** - 缓存、监控、指标、评估体系完整
+5. **结构化分块** - 保留标题层级和章节路径信息
+
+### 4. 当前系统的不足
+
+| 问题 | 详细描述 |
+|------|----------|
+| ❌ **分块策略粗糙** | 固定 680 字分块，未考虑教育文档的语义边界(如培养目标、课程大纲、教学要求各有不同结构) |
+| ❌ **Embedding 模型偏小** | `bge-small-zh-v1.5` (384维) 语义表示能力有限，对教育专业术语理解不够深入 |
+| ❌ **查询改写纯规则** | 硬编码同义词表和意图模式，无法处理复杂教育场景查询 |
+| ❌ **缺乏知识图谱** | 无法表示课程间的先修/后续关系、培养目标-课程-教学实践的关联 |
+| ❌ **重排序较基础** | 默认只用规则重排序，Cross-Encoder 未启用 |
+| ❌ **无教育本体论建模** | 没有对 AI 专业培养方案进行本体论/知识图谱语义建模 |
+| ❌ **评估单维度** | 仅有技术评估(precision/recall)，缺乏教育效果评估 |
+
+---
+
+## 二、教育化转型思路 (结合您的截图建议)
+
+> 根据截图中的"从技术逻辑转向教育逻辑"建议，以下是具体转型方案：
+
+### 转型 1: 知识建模优化 — 引入教育本体论 (Ontology)
+
+**目标**: 不再是简单的"知识库"，而是基于本体论的 AI 专业培养方案语义模型
+
+```mermaid
+graph LR
+    A["培养目标<br/>(宏观)"] --> B["毕业要求<br/>(中观)"]
+    B --> C["课程体系<br/>(微观)"]
+    C --> D["教学实践<br/>(执行)"]
+    
+    A -.-> E["能力指标点"]
+    B -.-> E
+    C -.-> F["课程关联矩阵"]
+    D -.-> G["实验/实践项目"]
+    
+    style A fill:#e1f5fe
+    style B fill:#b3e5fc
+    style C fill:#81d4fa
+    style D fill:#4fc3f7
+```
+
+**具体做法**:
+- 构建 **课程知识图谱** (Neo4j 或 NetworkX)：课程→先修课→能力指标点→毕业要求→培养目标
+- 在 chunk metadata 中嵌入本体论标签 (ontology tags)
+- 检索时利用知识图谱进行 **图增强检索** (Graph-RAG)
+
+### 转型 2: 关联理论 — 动态脚手架 RAG
+
+**目标**: 基于 Scaffolding Instruction（脚手架教学理论），RAG 不只是检索，而是根据学生当前认知水平动态调整检索深度
+
+**具体做法**:
+- 为每个查询分析**认知层次** (Bloom 分类法: 记忆→理解→应用→分析→评价→创造)
+- 低层次查询: 直接检索培养方案/规章制度原文
+- 高层次查询: 触发交叉检索 + 知识图谱推理 + 多步推理
+- 引入 **学习路径推荐**: 基于课程先修关系图，推荐学习路径
+
+### 转型 3: 专业一致性分析
+
+**目标**: 自动检测"培养目标(宏观) - 课程大纲(中观) - 教学实施(微观)"三者之间的一致性
+
+**具体做法**:
+- 构建三层一致性检测模块
+- 利用 Embedding 计算培养目标描述与课程内容的语义相似度
+- 输出一致性报告：哪些课程未覆盖某个培养目标，哪些存在重叠
+
+### 转型 4: 教育角色定位 — 多角色 System Prompt
+
+**目标**: 根据用户身份(学生/教师/管理者)切换 RAG 行为
+
+| 用户角色 | RAG 行为 | System Prompt 策略 |
+|----------|----------|-------------------|
+| **学生** | 认知学伴，引导理解知识地图 | 不直接给答案，引导学生发现关联 |
+| **教师** | 教学助理，快速生成教案案例 | 根据培养方案生成 Python 实验案例 |
+| **管理者** | 决策支持，分析课程数据 | 识别知识重叠/断层，生成分析报告 |
+
+---
+
+## 三、推荐技术转型路线图
+
+### Phase 1: 基础增强 (短期可实施)
+- [ ] 升级 Embedding 模型: `bge-small-zh-v1.5` → `bge-base-zh-v1.5` 或 `bge-large-zh-v1.5`
+- [ ] 启用 Cross-Encoder 重排序 (`bge-reranker-base`)
+- [ ] 优化分块策略: 基于教育文档结构的语义分块 (培养目标/课程大纲/教学要求分别处理)
+- [ ] 增加元数据层: 为每个 chunk 标注教育维度标签 (培养目标/毕业要求/课程内容/实践环节)
+
+### Phase 2: 知识图谱引入 (中期)
+- [ ] 构建课程知识图谱 (课程→先修课→能力指标点→毕业要求→培养目标)
+- [ ] 实现 Graph-RAG: 检索时结合图谱路径进行上下文扩展
+- [ ] 实现一致性分析模块: 自动检测培养方案三层一致性
+
+### Phase 3: 教育智能化 (长期)
+- [ ] 引入 Bloom 认知层次分类器，实现动态脚手架检索
+- [ ] 多角色 System Prompt 系统 (学生/教师/管理者)
+- [ ] 学习路径推荐引擎
+- [ ] 教育效果评估框架 (不只是技术指标，还要衡量教育价值)
+
+---
+
+## 四、核心改进对比
+
+| 维度 | 当前方案 | 改进方案 |
+|------|----------|----------|
+| **知识表示** | 扁平 chunk (JSON + ChromaDB) | 本体论 + 知识图谱 + 向量 (Graph-RAG) |
+| **分块策略** | 固定 680 字 | 教育文档结构感知分块 |
+| **Embedding** | bge-small-zh (384维) | bge-large-zh (1024维) 或领域微调 |
+| **查询理解** | 规则查询改写 | LLM 查询改写 + Bloom 认知分类 |
+| **重排序** | 规则特征加权 | Cross-Encoder + 教育相关性加权 |
+| **检索策略** | 向量+关键词混合 | 混合 + 知识图谱路径 + 动态脚手架 |
+| **生成策略** | 统一 System Prompt | 多角色 Prompt (学生/教师/管理者) |
+| **评估体系** | 技术指标 (precision/recall) | 技术 + 教育效果双维度评估 |
+
+> [!IMPORTANT]
+> 以上是分析和建议方案，不涉及代码修改。如需实施某个具体 Phase，请告知，我将制定详细的代码级实施计划。

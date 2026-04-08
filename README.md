@@ -1,64 +1,96 @@
-# 安信工AI小助手
+﻿# 安信工 AI 助手
 
-基于学生手册知识库的智能问答系统，通过自然语言对话方式，让学生能够快速、准确地获取校规信息。
+基于人工智能专业培养方案与课程资料的 RAG 问答系统，提供专业知识检索、会话问答、来源追踪和基础用户认证能力。
 
-## 项目简介
+## 当前交付目标
 
-安信工AI小助手采用 RAG (Retrieval-Augmented Generation) 架构，结合向量检索、重排序和推理引擎，为学生提供准确的规章制度查询服务。
+本版本不再只面向单机演示，而是按“企业可落地部署”的思路整理：
+
+- 区分 `development` 与 `production` 运行档位
+- `production` 下支持严格模式，关键依赖缺失时直接启动失败
+- 提供就绪探针、存活探针、数据库健康检查和 Prometheus 文本指标
+- 提供开发编排和生产编排两套 Docker Compose 入口
+- 提供独立的生产环境变量模板，支持 MongoDB + Redis + 前后端分离部署
 
 ## 技术栈
 
 ### 后端
-- **框架**: FastAPI 0.104+
-- **数据库**: MongoDB 4.4+
-- **向量数据库**: ChromaDB 0.4+
-- **检索**: TF-IDF + 向量检索 + 重排序
-- **LLM**: 支持通义千问、OpenAI 等兼容 API
+
+- FastAPI
+- MongoDB
+- Redis
+- SlowAPI
+- 可选 ChromaDB
 
 ### 前端
-- **框架**: Vue 3.4+
-- **构建工具**: Vite 5+
-- **语言**: TypeScript 5+
-- **样式**: Tailwind CSS 3+
-- **状态管理**: Pinia 2+
 
-## 功能特性
+- Vue 3
+- Vite
+- TypeScript
+- Tailwind CSS
+- Pinia
 
-- ✅ 智能问答：基于学生手册的自然语言问答
-- ✅ 上下文对话：支持多轮对话，记住上下文
-- ✅ 交叉推理：自动识别跨章节关联问题
-- ✅ 来源追溯：显示答案来源和相似度
-- ✅ 会话管理：创建、切换、删除会话
-- ✅ 用户认证：注册、登录、Token 刷新
-- ✅ 思考过程：显示 AI 的推理过程（可选）
+## 目录结构
+
+```text
+backend/                 FastAPI 后端
+frontend/                Vue 前端
+database/                知识库与索引数据
+docs/                    设计与部署文档
+tests/                   自动化测试
+docker-compose.yml       开发编排
+docker-compose.prod.yml  生产编排
+.env.example             开发环境模板
+.env.production.example  生产环境模板
+```
+
+## 运行模式
+
+### 开发模式
+
+特点：
+
+- 允许 `PUBLIC_DEMO_MODE=true`
+- 允许文件会话降级
+- 关键依赖缺失时可降级启动
+
+### 生产模式
+
+特点：
+
+- `ENVIRONMENT=production`
+- `STRICT_PRODUCTION_MODE=true`
+- `PUBLIC_DEMO_MODE=false`
+- 会校验关键配置、知识库加载、数据库连接、会话后端状态
+- 不允许把文件会话当成默认生产方案
 
 ## 快速开始
 
-### 前置要求
+### 1. 准备环境文件
 
-- Python 3.8+
-- MongoDB 4.4+
-- Node.js 16+ (前端开发)
-
-### 后端启动
+开发环境：
 
 ```bash
-# 创建虚拟环境
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-.venv\Scripts\activate  # Windows
+cp .env.example .env
+```
 
-# 安装依赖
+生产环境：
+
+```bash
+cp .env.production.example .env.production
+```
+
+### 2. 本地开发
+
+后端：
+
+```bash
 pip install -r requirements.txt
-
-# 启动服务
 cd backend
 python main.py
 ```
 
-服务将在 `http://localhost:8001` 启动。
-
-### 前端启动
+前端：
 
 ```bash
 cd frontend
@@ -66,95 +98,76 @@ npm install
 npm run dev
 ```
 
-前端将在 `http://localhost:5173` 启动。
-
-## 项目结构
-
-```
-学生手册知识库/
-├── backend/              # 后端代码
-│   ├── agent.py          # AI 智能体
-│   ├── config.py         # 配置文件
-│   ├── main.py           # FastAPI 应用入口
-│   ├── models.py         # 数据模型
-│   ├── knowledge_base.py # 知识库
-│   ├── reranker.py       # 重排序
-│   ├── reasoning_engine.py # 推理引擎
-│   ├── cross_retrieval_engine.py # 交叉检索
-│   └── routers/          # API 路由
-├── frontend/             # 前端代码
-│   ├── src/
-│   │   ├── api/          # API 调用
-│   │   ├── components/   # 组件
-│   │   ├── views/        # 页面
-│   │   └── stores/       # 状态管理
-├── database/             # 数据库文件
-│   ├── rag_knowledge_base_optimized.json
-│   └── chroma_db/        # 向量数据库
-├── scripts/              # 工具脚本
-├── tests/                # 测试文件
-├── docs/                 # 文档
-│   ├── api/             # API 文档
-│   └── deploy/          # 部署文档
-└── requirements.txt     # Python 依赖
-```
-
-## API 文档
-
-启动后端后，访问 `http://localhost:8001/docs` 查看自动生成的 Swagger 文档。
-
-详细的 API 文档请参考 [docs/api/README.md](docs/api/README.md)。
-
-## 部署文档
-
-详细的部署指南请参考 [docs/deploy/README.md](docs/deploy/README.md)。
-
-## 开发指南
-
-### 运行测试
+### 3. Docker 开发编排
 
 ```bash
-# 安装开发依赖
-pip install -r requirements-dev.txt
-
-# 运行测试
-pytest
-
-# 运行测试并生成覆盖率报告
-pytest --cov=backend --cov-report=html
+docker compose up -d
 ```
 
-### 代码规范
+### 4. Docker 生产编排
 
 ```bash
-# 格式化代码
-black backend/
-isort backend/
-
-# 检查代码质量
-flake8 backend/
-mypy backend/
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 ```
 
-## 知识库重建
+## 健康检查与可观测性
+
+- `GET /health/live`：进程存活
+- `GET /health/ready`：依赖就绪状态
+- `GET /health/db`：数据库健康检查
+- `GET /metrics`：Prometheus 文本指标
+
+## 生产部署建议
+
+- 前端、后端、MongoDB、Redis 使用独立容器或独立托管服务
+- 使用反向代理或网关统一入口，并启用 HTTPS
+- 在 CI/CD 中固定镜像 tag，不直接发布 `latest`
+- 使用 `.env.production` 或密钥管理服务注入 `SECRET_KEY`、`LLM_API_KEY`
+- 通过 `health/ready` 作为编排平台就绪探针
+
+## 常用命令
 
 ```bash
-cd database
-python rebuild_kb.py
+make install
+make test
+make docker-up
+make docker-prod-up
 ```
 
-## 贡献指南
+## DeepScientist 静默启动
 
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+推荐使用项目内的通用静默启动器，而不是旧的多窗口启动方式：
 
-## 许可证
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start_deepscientist_silent.ps1
+```
 
-本项目采用 MIT 许可证。
+如果要双击启动且不出现黑窗口，直接运行根目录的 `start_deepscientist_silent.vbs`。
 
-## 联系方式
+说明：
 
-如有问题或建议，请提交 Issue 或联系开发团队。
+- 不打开浏览器
+- 不进入 TUI
+- 不额外弹出新的 `cmd` 或 `PowerShell` 黑窗口
+- 如果 `DeepScientist` daemon 已经在运行，会直接返回，不重复拉起实例
+- 启动日志写入 `.\DeepScientist\logs\silent-launch.log`
+
+停止命令：
+
+```powershell
+ds --here --stop
+```
+
+跨项目复用方式：
+
+- 复制 `scripts/start_deepscientist_silent.ps1` 到目标项目的 `scripts/` 目录
+- 目标项目保持 `项目根/.env`、`项目根/DeepScientist/`、`项目根/scripts/` 结构
+- 然后执行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start_deepscientist_silent.ps1 -ProjectRoot .
+```
+
+## 进一步说明
+
+详细部署流程见 [docs/deploy/README.md](docs/deploy/README.md)。
