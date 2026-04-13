@@ -134,6 +134,34 @@ make docker-up
 make docker-prod-up
 ```
 
+## 源码发布与压缩包
+
+项目根目录不再直接堆放部署产物，统一输出到本地 `release-artifacts/` 目录，该目录默认不纳入 Git。
+
+Windows 下生成不含虚拟环境和依赖目录的发布压缩包：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\create_release_zip.ps1
+```
+
+默认生成文件：
+
+```text
+release-artifacts/rag-system_YYYYMMDD_no-venv.zip
+```
+
+如果仍需生成 `tar.gz` 部署包，可继续使用：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\create_deploy_bundle.ps1
+```
+
+或在 Linux/macOS 下执行：
+
+```bash
+bash ./scripts/create_deploy_bundle.sh
+```
+
 ## DeepScientist 静默启动
 
 推荐使用项目内的通用静默启动器，而不是旧的多窗口启动方式：

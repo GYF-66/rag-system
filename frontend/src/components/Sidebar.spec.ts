@@ -26,10 +26,20 @@ describe('Sidebar', () => {
     const wrapper = mount(Sidebar);
 
     expect(wrapper.text()).toContain('发起新问答');
-    expect(wrapper.text()).toContain('专业学习工作台');
-    expect(wrapper.text()).toContain('公共首页');
-    expect(wrapper.text()).not.toContain('历史记录');
+    expect(wrapper.text()).toContain('安信工 AI 助手');
+    expect(wrapper.text()).toContain('首页');
+    expect(wrapper.text()).not.toContain('会话历史');
     expect(wrapper.text()).not.toContain('知识空间');
+  });
+
+  it('navigates to the graph workspace when clicking the graph menu item', async () => {
+    const wrapper = mount(Sidebar);
+    const graphButton = wrapper.findAll('button').find((button) => button.text().includes('知识图谱'));
+
+    expect(graphButton).toBeTruthy();
+    await graphButton!.trigger('click');
+
+    expect(push).toHaveBeenCalledWith('/graph');
   });
 
   it('emits new-chat when the primary button is clicked', async () => {
@@ -43,12 +53,12 @@ describe('Sidebar', () => {
 
   it('emits a quick-question when selecting a sample prompt', async () => {
     const wrapper = mount(Sidebar);
-    const quickQuestionButton = wrapper.findAll('button').find((button) => button.text().includes('人工智能专业的核心课程与实践如何安排'));
+    const quickQuestionButton = wrapper.findAll('button').find((button) => button.text().includes('人工智能专业的核心课程与实践环节如何安排'));
 
     expect(quickQuestionButton).toBeTruthy();
     await quickQuestionButton!.trigger('click');
 
-    expect(wrapper.emitted('quick-question')?.[0]).toEqual(['人工智能专业的核心课程与实践如何安排？']);
+    expect(wrapper.emitted('quick-question')?.[0]).toEqual(['人工智能专业的核心课程与实践环节如何安排？']);
   });
 
   it('shows logout action for authenticated users', async () => {

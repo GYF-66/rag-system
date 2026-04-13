@@ -215,7 +215,19 @@ async function exerciseManualFlow(page, baseUrl) {
       { timeout: 30000 },
     );
 
+    await page.waitForFunction(
+      () => Boolean(
+        document.querySelector('[data-testid="thinking-process"]')
+        || document.querySelector('[data-testid="trace-status"]')
+        || document.querySelector('[data-testid="streaming-cursor"]'),
+      ),
+      { timeout: 30000 },
+    );
+
     await page.waitForSelector('[data-testid="source-card"]', { timeout: 30000 });
+
+    result.hasThinkingPanel = await page.locator('[data-testid="thinking-process"]').count() > 0;
+    result.hasTraceStatus = await page.locator('[data-testid="trace-status"]').count() > 0;
   } catch (error) {
     result.degraded = true;
     result.reason = error instanceof Error ? error.message : 'manual flow degraded';
@@ -296,6 +308,8 @@ try {
     demoSpaceId: demoSpace.id,
     degradedManualFlow: manualFlow.degraded,
     degradedReason: manualFlow.reason,
+    hasThinkingPanel: manualFlow.hasThinkingPanel ?? false,
+    hasTraceStatus: manualFlow.hasTraceStatus ?? false,
   }, null, 2));
 } finally {
   if (browser) {

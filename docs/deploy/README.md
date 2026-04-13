@@ -76,9 +76,11 @@ curl http://localhost:8001/health/db
 1. 构建前后端镜像。
 2. 通过 CI 运行后端测试与前端测试。
 3. 将 `.env.production` 中的密钥由密钥平台注入。
-4. 先发布 `backend`，确认 `/health/ready` 正常。
-5. 再切换 `frontend` 流量。
-6. 发布后接 Prometheus 或日志平台采集 `/metrics` 与容器日志。
+4. 使用 `bash scripts/create_deploy_bundle.sh` 生成发布包。
+5. 上传到远端部署根目录，保留当前 `app/` 目录备份。
+6. 在远端执行 `docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build`。
+7. 发布后强制校验 `/health`、`/health/ready` 和 `/api/chat/stream`。
+8. 发布后接 Prometheus 或日志平台采集 `/metrics` 与容器日志，并记录回滚目录。
 
 ## 6. 高可用建议
 

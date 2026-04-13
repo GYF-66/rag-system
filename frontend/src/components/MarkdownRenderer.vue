@@ -1,5 +1,9 @@
-﻿<template>
-  <div class="markdown-body" data-testid="answer-rich-text" v-html="renderedHtml"></div>
+<template>
+  <div
+    :class="['markdown-body', { 'markdown-typewriter': typewriter }]"
+    data-testid="answer-rich-text"
+    v-html="renderedHtml"
+  />
 </template>
 
 <script setup lang="ts">
@@ -13,9 +17,11 @@ const props = withDefaults(
   defineProps<{
     content: string;
     sanitize?: boolean;
+    typewriter?: boolean;
   }>(),
   {
     sanitize: true,
+    typewriter: false,
   },
 );
 
@@ -42,6 +48,11 @@ const renderedHtml = computed(() => {
   line-height: 1.8;
   color: #1f2937;
   word-break: break-word;
+}
+
+.markdown-typewriter {
+  font-family: var(--font-mono);
+  letter-spacing: 0.01em;
 }
 
 .markdown-body :deep(h1),

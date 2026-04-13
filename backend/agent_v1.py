@@ -63,8 +63,8 @@ def get_llm_service():
     global _llm_service
     if _llm_service is None:
         try:
-            from llm_service import llm_service
-            _llm_service = llm_service
+            from llm_service import get_default_llm_service
+            _llm_service = get_default_llm_service()
         except ImportError:
             _llm_service = None
     return _llm_service

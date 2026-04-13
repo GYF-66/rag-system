@@ -70,6 +70,72 @@ export interface ReflectionResult {
   duration_ms?: number;
 }
 
+export interface QueryRewriteMetadata {
+  original_query?: string;
+  normalized_query?: string;
+  keywords?: string[];
+  intents?: string[];
+  variants?: string[];
+}
+
+export interface CragEvaluationDetails {
+  similarity?: number;
+  keyword_coverage?: number;
+  diversity?: number;
+  completeness?: number;
+  reason?: string | null;
+}
+
+export interface CragCorrectionMetadata {
+  corrected?: boolean;
+  actions_taken?: string[];
+}
+
+export interface CragThresholdMetadata {
+  low?: number;
+  high?: number;
+}
+
+export interface CragEvaluation {
+  mode?: 'online_heuristic';
+  quality_score?: number | null;
+  action?: 'accept' | 'refine' | 'reject' | 'skipped' | string | null;
+  details?: CragEvaluationDetails | null;
+  thresholds?: CragThresholdMetadata | null;
+  correction_hints?: string[];
+  correction?: CragCorrectionMetadata | null;
+}
+
+export interface SelfRagMetadata {
+  mode?: 'llm_reflection';
+  status?: 'waiting' | 'supported' | 'partially_supported' | 'not_supported' | 'skipped' | string | null;
+  confidence?: number | null;
+  issues_count?: number;
+  revision_applied?: boolean;
+  evidence_count?: number;
+}
+
+export interface ChatMetadata {
+  request_id?: string;
+  retrieval_method?: string;
+  retrieval_variant_count?: number;
+  retrieval_variants?: string[];
+  query_rewrite?: QueryRewriteMetadata;
+  rerank_method?: string;
+  adaptive_route?: string;
+  is_cross_query?: boolean;
+  used_llm?: boolean;
+  source_count?: number;
+  total_duration_ms?: number;
+  crag_evaluation?: CragEvaluation | null;
+  hyde_used?: boolean;
+  graph_rag_used?: boolean;
+  cot_used?: boolean;
+  self_rag_reflection?: ReflectionResult['status'] | null;
+  self_rag?: SelfRagMetadata | null;
+  [key: string]: unknown;
+}
+
 export interface ThinkingProcess {
   query_analysis?: ThinkingStepSummary;
   retrieval?: ThinkingStepSummary;
@@ -80,6 +146,17 @@ export interface ThinkingProcess {
   summary?: string;
   total_duration_ms?: number;
 }
+
+export type ThinkingStepKey =
+  | 'query_analysis'
+  | 'retrieval'
+  | 'reranking'
+  | 'reasoning'
+  | 'reflection';
+
+export type ThinkingStepRunStatus = 'waiting' | 'streaming' | 'done' | 'warning';
+
+export type ThinkingStepStatusMap = Partial<Record<ThinkingStepKey, ThinkingStepRunStatus>>;
 
 export interface KnowledgeChunk {
   id: string;
@@ -100,9 +177,14 @@ export interface ChatMessage {
   createdAt?: string;
   sources?: KnowledgeChunk[];
   thinkingProcess?: ThinkingProcess;
-  metadata?: Record<string, unknown>;
+  metadata?: ChatMetadata;
   perspectives?: PerspectiveResult[];
   graphContext?: GraphContext | null;
+  streaming?: boolean;
+  streamStatus?: 'idle' | 'streaming' | 'done' | 'error';
+  thinkingProcessDraft?: Partial<ThinkingProcess>;
+  streamedContent?: string;
+  thinkingStatusMap?: ThinkingStepStatusMap;
 }
 
 export interface ChatHistory {
@@ -170,7 +252,36 @@ export interface ChatResponse {
   cross_reasoning?: string | null;
   is_cross_query?: boolean;
   graph_context?: GraphContext | null;
-  metadata?: Record<string, unknown>;
+  metadata?: ChatMetadata;
+}
+
+export interface ChatStreamMetadataEvent {
+  request_id?: string;
+  contract_version?: number;
+  event_types?: string[];
+  session_id?: string;
+  sources?: KnowledgeChunk[];
+  graph_context?: GraphContext | null;
+  metadata?: ChatMetadata;
+}
+
+export interface ChatStreamReflectionEvent extends ReflectionResult {
+  request_id?: string;
+}
+
+export interface ChatStreamDoneEvent {
+  request_id?: string;
+  total_duration_ms?: number;
+}
+
+export interface ChatStreamEventMap {
+  metadata: ChatStreamMetadataEvent;
+  token: { content?: string };
+  answer_replace: { content?: string };
+  reflection: ChatStreamReflectionEvent;
+  thinking: ThinkingProcess;
+  done: ChatStreamDoneEvent;
+  error: { message?: string; request_id?: string };
 }
 
 export interface SearchResult {
@@ -284,7 +395,7 @@ export interface PerspectiveChatResponse {
   sources: KnowledgeChunk[];
   timestamp: string;
   total_duration_ms: number;
-  metadata?: Record<string, unknown>;
+  metadata?: ChatMetadata;
 }
 
 // ============ GraphRAG 知识图谱类型 ============

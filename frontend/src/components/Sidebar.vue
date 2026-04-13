@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { DEMO_MODE } from '@/router';
 import { useAuthStore } from '@/stores/auth';
 
@@ -29,18 +29,18 @@ const isQuickQuestionsOpen = ref(true);
 const isUserMenuOpen = ref(false);
 
 const quickQuestions: QuickQuestion[] = [
-  { id: 'courses', question: '人工智能专业的核心课程与实践如何安排？', icon: 'fa-book-open' },
+  { id: 'courses', question: '人工智能专业的核心课程与实践环节如何安排？', icon: 'fa-book-open' },
   { id: 'path', question: '毕业设计与学习路径有哪些关键要求？', icon: 'fa-route' },
   { id: 'rag', question: 'RAG 在专业知识问答里解决了什么问题？', icon: 'fa-microchip' },
-  { id: 'sources', question: '来源片段和重排结果该如何理解？', icon: 'fa-magnifying-glass-chart' },
+  { id: 'sources', question: '来源片段和重排结果应该如何理解？', icon: 'fa-magnifying-glass-chart' },
 ];
 
 const allMenuItems: MenuItem[] = [
-  { id: 'manual', label: '智能问答', icon: 'fa-solid fa-comments' },
+  { id: 'manual', label: '问答工作台', icon: 'fa-solid fa-comments' },
   { id: 'graph', label: '知识图谱', icon: 'fa-solid fa-diagram-project' },
   { id: 'discover', label: '首页', icon: 'fa-solid fa-house' },
   { id: 'history', label: '会话历史', icon: 'fa-solid fa-clock-rotate-left', requiresAuth: true },
-  { id: 'spaces', label: '知识库', icon: 'fa-solid fa-book-open', requiresAuth: true },
+  { id: 'spaces', label: '知识空间', icon: 'fa-solid fa-book-open', requiresAuth: true },
 ];
 
 const menuItems = computed(() => {
@@ -51,6 +51,7 @@ const menuItems = computed(() => {
 });
 
 const activeItem = computed(() => route.name?.toString() || 'manual');
+
 const userLabel = computed(() => {
   if (!authStore.isAuthenticated) {
     return DEMO_MODE ? '访客体验' : '未登录';
@@ -58,7 +59,8 @@ const userLabel = computed(() => {
 
   return authStore.currentUser?.nickname || authStore.currentUser?.username || '校园用户';
 });
-const userMenuHomeLabel = computed(() => '返回公共首页');
+
+const userMenuHomeLabel = computed(() => '返回首页');
 
 function handleMenuItemClick(itemId: string) {
   if (itemId === 'discover') {
@@ -102,12 +104,12 @@ async function handleLogout() {
     <div class="px-5 pb-4 pt-6">
       <div class="flex items-center space-x-3">
         <div class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[rgba(126,91,67,0.14)] bg-white/90 shadow-sm">
-          <img src="/校徽.jpg" alt="安徽信息工程学院校徽" class="h-full w-full object-cover" />
+          <img src="/校徽.jpg" alt="安信工校徽" class="h-full w-full object-cover" />
         </div>
         <div class="sidebar-text">
-          <div class="text-base font-semibold tracking-wide text-slate-800">AIIT 专业学习工作台</div>
+          <div class="text-base font-semibold tracking-wide text-slate-800">安信工 AI 助手</div>
           <div class="text-xs font-medium text-[rgba(112,83,69,0.72)]">
-            {{ DEMO_MODE ? '专业学习主视觉 · 公开体验' : '专业学习主视觉 · 校园知识入口' }}
+            {{ DEMO_MODE ? '人工智能专业知识工作台 · 公开体验' : '人工智能专业知识工作台 · 校园知识入口' }}
           </div>
         </div>
       </div>

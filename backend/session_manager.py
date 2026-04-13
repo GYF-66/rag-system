@@ -2,6 +2,7 @@
 """Session backends for demo and production profiles."""
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import uuid
@@ -13,6 +14,7 @@ from config import (
     ENVIRONMENT,
     MAX_HISTORY_TURNS,
     MEMORY_DIR,
+    MONGODB_REQUIRED,
     MONGODB_URL,
     REDIS_SESSION_TTL,
     REDIS_URL,
@@ -348,6 +350,38 @@ async def close_session_manager(manager) -> None:
         await result
 
 
+def _can_use_mongo_sessions() -> bool:
+    if not MONGODB_URL:
+        return False
+
+    try:
+        from motor.motor_asyncio import AsyncIOMotorClient
+
+        async def _ping() -> bool:
+            client = AsyncIOMotorClient(
+                MONGODB_URL,
+                serverSelectionTimeoutMS=1500,
+                connectTimeoutMS=1500,
+                socketTimeoutMS=1500,
+            )
+            try:
+                await client.admin.command('ping')
+                return True
+            finally:
+                client.close()
+
+        loop = None
+        try:
+            loop = asyncio.new_event_loop()
+            return loop.run_until_complete(_ping())
+        finally:
+            if loop is not None:
+                loop.close()
+    except Exception as exc:
+        logger.warning('MongoDB session backend unavailable: %s', exc)
+        return False
+
+
 def _create_session_manager():
     backend = SESSION_BACKEND or 'auto'
 
@@ -368,15 +402,20 @@ def _create_session_manager():
         if redis_async is not None:
             try:
                 mgr = RedisSessionManager()
-                import asyncio
-                asyncio.get_event_loop().run_until_complete(mgr.ping())
+                loop = asyncio.new_event_loop()
+                try:
+                    loop.run_until_complete(mgr.ping())
+                finally:
+                    loop.close()
                 logger.info('Using Redis session backend')
                 return mgr
             except Exception as exc:
                 logger.warning('Redis session backend unavailable: %s', exc)
         if MONGODB_URL:
-            logger.info('Using MongoDB session backend')
-            return MongoSessionManager()
+            if MONGODB_REQUIRED or _can_use_mongo_sessions():
+                logger.info('Using MongoDB session backend')
+                return MongoSessionManager()
+            logger.warning('MongoDB session backend unavailable, falling back to file sessions')
         if STRICT_PRODUCTION_MODE and ENVIRONMENT == 'production':
             raise RuntimeError('No production-ready session backend is available; configure Redis or MongoDB')
         logger.info('Falling back to file session backend')

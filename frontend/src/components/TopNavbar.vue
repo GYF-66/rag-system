@@ -30,8 +30,8 @@ onBeforeUnmount(() => {
 
 const navItems = computed<NavItem[]>(() => {
   const items: NavItem[] = [
-    { id: 'discover', label: '公共首页', to: '/' },
-    { id: 'manual', label: '专业学习工作台', to: '/manual' },
+    { id: 'discover', label: '首页', to: '/' },
+    { id: 'manual', label: '问答工作台', to: '/manual' },
     { id: 'graph', label: '知识图谱', to: '/graph' },
   ];
 
@@ -47,12 +47,14 @@ const navItems = computed<NavItem[]>(() => {
 
 const brandSubtitle = computed(() => {
   if (authStore.isAuthenticated) {
-    return '专业学习主视觉 · 已登录工作台';
+    return '人工智能专业知识工作台 · 已登录';
   }
+
   if (DEMO_MODE) {
-    return '专业学习主视觉 · 公开体验模式';
+    return '人工智能专业知识工作台 · 演示模式';
   }
-  return '专业学习主视觉 · AI 专业知识入口';
+
+  return '人工智能专业知识工作台 · 校园知识入口';
 });
 
 const userLabel = computed(() => {
@@ -64,14 +66,14 @@ const userLabel = computed(() => {
 });
 
 const primaryActionLabel = computed(() => {
-  if (authStore.isAuthenticated) return '继续问答';
+  if (authStore.isAuthenticated) return '继续提问';
   if (DEMO_MODE) return '立即体验';
   return '登录进入';
 });
 
 const secondaryActionLabel = computed(() => {
   if (authStore.isAuthenticated) return '知识空间';
-  if (DEMO_MODE) return '公共首页';
+  if (DEMO_MODE) return '返回首页';
   return '注册账号';
 });
 
@@ -115,10 +117,10 @@ function handleBrandClick() {
   <nav class="topbar-shell" :class="{ 'topbar-shell--scrolled': isScrolled }">
     <button class="topbar-brand" type="button" @click="handleBrandClick">
       <span class="topbar-brand-mark">
-        <img src="/校徽.jpg" alt="安徽信息工程学院校徽" class="topbar-brand-emblem" />
+        <img src="/校徽.jpg" alt="安信工校徽" class="topbar-brand-emblem" />
       </span>
       <span class="topbar-brand-copy">
-        <strong>AIIT 专业学习工作台</strong>
+        <strong>安信工 AI 助手</strong>
         <small>{{ brandSubtitle }}</small>
       </span>
     </button>

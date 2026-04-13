@@ -86,14 +86,23 @@ COLLECTION_SESSIONS = os.getenv('COLLECTION_SESSIONS', 'sessions')
 COLLECTION_TOKENS = os.getenv('COLLECTION_TOKENS', 'tokens')
 COLLECTION_SPACES = os.getenv('COLLECTION_SPACES', 'spaces')
 
-LLM_API_KEY = os.getenv('LLM_API_KEY', '')
-LLM_API_BASE_URL = os.getenv('LLM_API_BASE_URL', 'https://spark-api-open.xf-yun.com/v1')
-LLM_MODEL = os.getenv('LLM_MODEL', 'lite')
+SPARK_APP_ID = os.getenv('SPARK_APP_ID', '')
+SPARK_API_KEY = os.getenv('SPARK_API_KEY', '')
+SPARK_API_SECRET = os.getenv('SPARK_API_SECRET', '')
+SPARK_API_PASSWORD = os.getenv('SPARK_API_PASSWORD', '')
+SPARK_API_BASE_URL = os.getenv('SPARK_API_BASE_URL', 'https://spark-api-open.xf-yun.com/v1')
+SPARK_WS_URL = os.getenv('SPARK_WS_URL', 'wss://spark-api.xf-yun.com/v1.1/chat')
+SPARK_MODEL = os.getenv('SPARK_MODEL', 'sparklite')
+
+LLM_API_KEY = os.getenv('LLM_API_KEY') or SPARK_API_PASSWORD
+LLM_API_BASE_URL = os.getenv('LLM_API_BASE_URL') or SPARK_API_BASE_URL
+LLM_MODEL = os.getenv('LLM_MODEL') or SPARK_MODEL
 LLM_MAX_TOKENS = int(os.getenv('LLM_MAX_TOKENS', '2048'))
 LLM_TEMPERATURE = float(os.getenv('LLM_TEMPERATURE', '0.7'))
 LLM_TIMEOUT = float(os.getenv('LLM_TIMEOUT', '60.0'))
 LLM_REQUIRED = _as_bool(os.getenv('LLM_REQUIRED'), default=False)
-LLM_PROVIDER = os.getenv('LLM_PROVIDER', 'ollama')  # 'api' or 'ollama'
+_default_llm_provider = 'spark' if 'spark-api-open.xf-yun.com' in LLM_API_BASE_URL.lower() else 'ollama'
+LLM_PROVIDER = os.getenv('LLM_PROVIDER', _default_llm_provider).strip().lower()  # 'spark', 'api', or 'ollama'
 
 # ── Ollama 本地 GPU 推理配置 ─────────────────────────────────────────────────
 OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
@@ -308,7 +317,11 @@ def validate_runtime_settings() -> List[str]:
             issues.append('MONGODB_URL is required in strict production mode.')
         if REDIS_REQUIRED and not REDIS_URL:
             issues.append('REDIS_URL is required when REDIS_REQUIRED=true.')
-        if LLM_REQUIRED and not LLM_API_KEY:
-            issues.append('LLM_API_KEY is required when LLM_REQUIRED=true.')
+        if LLM_REQUIRED:
+            if LLM_PROVIDER == 'spark':
+                if not (SPARK_APP_ID and SPARK_API_KEY and SPARK_API_SECRET):
+                    issues.append('SPARK_APP_ID, SPARK_API_KEY and SPARK_API_SECRET are required when LLM_PROVIDER=spark.')
+            elif not LLM_API_KEY:
+                issues.append('LLM_API_KEY is required when LLM_REQUIRED=true.')
 
     return issues

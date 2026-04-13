@@ -13,16 +13,26 @@ import time
 logger = logging.getLogger(__name__)
 
 from fastapi import FastAPI, HTTPException, status, Depends, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from rate_limit import limiter
-from middleware.security import SecurityHeadersMiddleware
+from middleware import RequestContextMiddleware, SecurityHeadersMiddleware, get_request_id
 from monitoring.metrics import metrics, MetricsMiddleware
 from exceptions import register_exception_handlers, QueryProcessingError, KnowledgeBaseError, SessionNotFoundError
 
 from auth import get_current_user, get_optional_current_user
-from config import API_HOST, API_PORT, AGENT_NAME, USE_CHROMADB
+from config import (
+    API_HOST,
+    API_PORT,
+    AGENT_NAME,
+    LLM_MODEL,
+    LLM_PROVIDER,
+    LLM_REQUIRED,
+    USE_CHROMADB,
+    validate_runtime_settings,
+)
 
 
 def _to_knowledge_chunk(s: dict, *, trim_text: bool = False) -> 'KnowledgeChunk':
@@ -125,6 +135,25 @@ from routers import spaces_router, auth_router, graph_router
 from database import close_database, check_connection
 
 
+SSE_EVENT_TYPES = ('metadata', 'token', 'answer_replace', 'reflection', 'thinking', 'done', 'error')
+
+
+def _request_id_from(request: Request | None = None) -> str:
+    if request is not None:
+        request_id = getattr(request.state, 'request_id', None)
+        if request_id:
+            return request_id
+    return get_request_id() or ''
+
+
+def _log_request_event(level: int, message: str, *, request: Request | None = None, **fields) -> None:
+    request_id = _request_id_from(request)
+    field_parts = [f'request_id={request_id}'] if request_id else []
+    field_parts.extend(f'{key}={value}' for key, value in fields.items() if value not in (None, ''))
+    suffix = f" {' '.join(field_parts)}" if field_parts else ''
+    logger.log(level, '%s%s', message, suffix)
+
+
 # ============ 应用生命周期管理 ============
 
 @asynccontextmanager
@@ -193,6 +222,9 @@ app.add_middleware(
     max_age=3600,
 )
 
+# 请求上下文与关联 ID
+app.add_middleware(RequestContextMiddleware)
+
 # 添加安全响应头中间件
 app.add_middleware(SecurityHeadersMiddleware)
 
@@ -231,6 +263,94 @@ async def health_check():
         knowledge_base_loaded=knowledge_base.is_loaded(),
         total_chunks=len(knowledge_base.chunks) if knowledge_base.is_loaded() else 0,
         timestamp=datetime.now()
+    )
+
+
+@app.get("/health/live", tags=["系统"])
+async def live_check():
+    """进程存活探针。"""
+    return {
+        "status": "alive",
+        "agent_name": AGENT_NAME,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@app.get("/health/ready", tags=["系统"])
+async def ready_check():
+    """服务就绪探针，汇总知识库、数据库和会话后端状态。"""
+    knowledge_ready = knowledge_base.is_loaded()
+    db_status = await check_connection()
+    db_ready = db_status.get("status") == "healthy"
+    runtime_issues = validate_runtime_settings()
+
+    session_backend = type(session_manager).__name__
+    session_store_status = "healthy"
+    session_error = None
+    ping = getattr(session_manager, "ping", None)
+    if callable(ping):
+        try:
+            await ping()
+        except Exception as exc:
+            session_store_status = "unhealthy"
+            session_error = str(exc)
+
+    llm_service = None
+    llm_status = 'unknown'
+    llm_error = None
+    llm_available = False
+    try:
+        from llm_service import get_default_llm_service
+
+        llm_service = get_default_llm_service()
+        llm_available = bool(llm_service and llm_service.is_available())
+        llm_status = 'healthy' if llm_available else ('required_unavailable' if LLM_REQUIRED else 'degraded')
+        if not llm_available:
+            llm_error = 'LLM service is not configured or not reachable'
+    except Exception as exc:
+        llm_status = 'unhealthy' if LLM_REQUIRED else 'degraded'
+        llm_error = str(exc)
+
+    details = {
+        "knowledge_base": {
+            "status": "healthy" if knowledge_ready else "unhealthy",
+            "loaded": knowledge_ready,
+        },
+        "database": {
+            "status": db_status.get("status", "unknown"),
+            "detail": db_status,
+        },
+        "session_store": {
+            "backend": session_backend,
+            "status": session_store_status,
+            "error": session_error,
+        },
+        "llm": {
+            "provider": LLM_PROVIDER,
+            "model": LLM_MODEL,
+            "required": LLM_REQUIRED,
+            "status": llm_status,
+            "available": llm_available,
+            "error": llm_error,
+        },
+        "runtime_config": {
+            "status": "healthy" if not runtime_issues else "warning",
+            "issues": runtime_issues,
+        },
+        "strict_production_mode": os.getenv("STRICT_PRODUCTION_MODE", "false"),
+        "public_demo_mode": os.getenv("PUBLIC_DEMO_MODE", "false"),
+    }
+
+    ready = knowledge_ready and db_ready and session_store_status == "healthy" and (llm_available or not LLM_REQUIRED)
+    status_code = status.HTTP_200_OK if ready else status.HTTP_503_SERVICE_UNAVAILABLE
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": "ready" if ready else "not_ready",
+            "agent_name": AGENT_NAME,
+            "timestamp": datetime.now().isoformat(),
+            "checks": details,
+        },
     )
 
 
@@ -289,6 +409,7 @@ async def chat(payload: ChatRequest, request: Request, current_user: dict | None
     - **enable_thinking**: 是否显示思考过程（默认true）
     """
     try:
+        request_id = _request_id_from(request)
         # 从认证信息获取 user_id（支持免登录）
         user_id = (current_user or {}).get('user_id', payload.user_id) or 'anonymous'
 
@@ -349,15 +470,35 @@ async def chat(payload: ChatRequest, request: Request, current_user: dict | None
                     'is_cross_query': result.get('is_cross_query', False),
                 }),
             })
+        response_data.setdefault('metadata', {})
+        response_data['metadata']['request_id'] = request_id
+
+        _log_request_event(
+            logging.INFO,
+            'chat_request_succeeded',
+            request=request,
+            session_id=session_id,
+            source_count=len(sources),
+            user_id=user_id,
+        )
 
         return response_data
 
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
-        logger.error(f"聊天处理失败: {e}\n{tb}")
-        print(f"\n{'='*60}\n[CHAT ERROR] {e}\n{tb}\n{'='*60}", flush=True)
-        raise QueryProcessingError("处理请求时发生内部错误，请稍后重试")
+        _log_request_event(
+            logging.ERROR,
+            'chat_request_failed',
+            request=request,
+            session_id=getattr(payload, 'session_id', ''),
+            error=type(e).__name__,
+        )
+        logger.error("聊天处理失败: %s\n%s", e, tb)
+        raise QueryProcessingError(
+            "处理请求时发生内部错误，请稍后重试",
+            detail="chat_request_failed",
+        )
 
 
 # ============ SSE 流式聊天端点 ============
@@ -371,15 +512,17 @@ async def chat_stream(payload: ChatRequest, request: Request, current_user: dict
     事件类型:
     - **metadata**: 检索阶段结果（sources, thinking_process, graph_context）
     - **token**: LLM 生成的文本 token
+    - **answer_replace**: 当最终答案需要替换已输出文本时发送
     - **reflection**: Self-RAG 反思验证结果
+    - **thinking**: 完整思考过程对象
     - **done**: 流结束信号
     - **error**: 错误信息
     """
-    import json as _json
     from fastapi.responses import StreamingResponse
 
     async def event_generator():
         try:
+            request_id = _request_id_from(request)
             # ── 会话管理（与 /api/chat 一致）──
             user_id = payload.user_id
             if current_user:
@@ -394,8 +537,8 @@ async def chat_stream(payload: ChatRequest, request: Request, current_user: dict
             history = await session_manager.get_session_history(session_id)
 
             if not (AGENT_V2_AVAILABLE and agent_v2):
-                yield _sse('error', {'message': 'Agent v2 not available'})
-                yield _sse('done', {})
+                yield _sse('error', {'message': 'Agent v2 not available', 'request_id': request_id})
+                yield _sse('done', {'request_id': request_id})
                 return
 
             # ── 检索 + 预处理（非流式部分）──
@@ -434,33 +577,54 @@ async def chat_stream(payload: ChatRequest, request: Request, current_user: dict
 
             # ── 发送 metadata 事件 ──
             from retrieval.reranker import reranker
+            from llm_service import get_default_llm_service
+
+            llm_service = get_default_llm_service()
+            llm_available = bool(llm_service and llm_service.is_available())
             metadata_payload = {
+                'request_id': request_id,
+                'contract_version': 1,
+                'event_types': list(SSE_EVENT_TYPES),
                 'session_id': session_id,
                 'sources': [_to_knowledge_chunk(s).model_dump(mode='json') for s in sources],
                 'graph_context': graph_context,
-                'metadata': {
-                    'retrieval_method': retrieval_info.get('method', 'tfidf'),
-                    'adaptive_route': retrieval_info.get('route', 'standard'),
-                    'hyde_used': retrieval_info.get('hyde_used', False),
-                    'graph_rag_used': agent_v2._graph_retriever is not None,
-                    'cot_used': True,
-                    'source_count': len(sources),
-                    'rerank_method': 'cross_encoder' if reranker and reranker.use_cross_encoder else 'rule_based',
-                    'crag_evaluation': {'quality_score': crag_info.get('quality_score'), 'action': crag_info.get('action')} if crag_info else None,
-                },
+                'metadata': agent_v2._build_response_metadata(
+                    query=payload.message,
+                    query_analysis=query_analysis,
+                    retrieval_info=retrieval_info,
+                    sources=sources,
+                    used_llm=llm_available,
+                    total_duration_ms=None,
+                    crag_info=crag_info,
+                    cot_used=True,
+                    reflection_result=None,
+                    self_rag_pending=bool(llm_available and sources),
+                ),
             }
+            metadata_payload['metadata']['request_id'] = request_id
+            metadata_payload['metadata']['rerank_method'] = (
+                'cross_encoder' if reranker and reranker.use_cross_encoder else 'rule_based'
+            )
             yield _sse('metadata', metadata_payload)
 
             # ── 构建 CoT prompt ──
             cot_prompt = agent_v2._build_cot_system_prompt(query_analysis, sources)
 
             # ── 流式 LLM 生成 ──
-            from llm_service import llm_service
             if not llm_service or not llm_service.is_available():
                 # fallback 非流式
                 response_text = agent_v2._response_gen.generate(payload.message, context, sources)
                 yield _sse('token', {'content': response_text})
-                yield _sse('done', {'total_duration_ms': (_time.time() - total_start) * 1000})
+                total_duration = (_time.time() - total_start) * 1000
+                _log_request_event(
+                    logging.INFO,
+                    'chat_stream_fallback_completed',
+                    request=request,
+                    session_id=session_id,
+                    source_count=len(sources),
+                    duration_ms=round(total_duration, 2),
+                )
+                yield _sse('done', {'request_id': request_id, 'total_duration_ms': total_duration})
                 return
 
             full_response = ''
@@ -478,16 +642,24 @@ async def chat_stream(payload: ChatRequest, request: Request, current_user: dict
 
             # ── Self-RAG 反思 ──
             reflection_data = None
+            reflection_result = None
             if sources:
                 try:
-                    from models import ReflectionResult
                     reflection_result, _ = await agent_v2._self_rag_reflect(
                         payload.message, final_answer, sources, llm_service,
                     )
                     reflection_data = reflection_result.model_dump(mode='json')
+                    reflection_data['request_id'] = request_id
                     yield _sse('reflection', reflection_data)
-                except Exception:
-                    pass
+                except Exception as reflection_exc:
+                    _log_request_event(
+                        logging.WARNING,
+                        'chat_stream_reflection_failed',
+                        request=request,
+                        session_id=session_id,
+                        error=type(reflection_exc).__name__,
+                    )
+                    logger.warning('Self-RAG reflection failed: %s', reflection_exc)
 
             # ── 构建思维过程 ──
             generation_duration = (_time.time() - total_start) * 1000 - retrieval_duration
@@ -506,12 +678,28 @@ async def chat_stream(payload: ChatRequest, request: Request, current_user: dict
             total_duration = (_time.time() - total_start) * 1000
             metadata_payload['metadata']['total_duration_ms'] = total_duration
             metadata_payload['metadata']['self_rag_reflection'] = reflection_result.status if reflection_data else None
-            yield _sse('done', {'total_duration_ms': total_duration})
+            _log_request_event(
+                logging.INFO,
+                'chat_stream_completed',
+                request=request,
+                session_id=session_id,
+                source_count=len(sources),
+                reflection_status=reflection_result.status if reflection_data else 'skipped',
+                duration_ms=round(total_duration, 2),
+            )
+            yield _sse('done', {'request_id': request_id, 'total_duration_ms': total_duration})
 
         except Exception as exc:
             import traceback
-            logger.error(f"SSE chat error: {exc}\n{traceback.format_exc()}")
-            yield _sse('error', {'message': str(exc)})
+            _log_request_event(
+                logging.ERROR,
+                'chat_stream_failed',
+                request=request,
+                session_id=getattr(payload, 'session_id', ''),
+                error=type(exc).__name__,
+            )
+            logger.error("SSE chat error: %s\n%s", exc, traceback.format_exc())
+            yield _sse('error', {'message': str(exc), 'request_id': _request_id_from(request)})
 
     return StreamingResponse(event_generator(), media_type='text/event-stream')
 
@@ -1080,5 +1268,3 @@ if __name__ == "__main__":
         port=API_PORT,
         reload=True
     )
-
-

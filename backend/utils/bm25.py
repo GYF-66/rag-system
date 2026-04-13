@@ -1,6 +1,6 @@
-"""
-BM25算法实现
-用于关键词检索的改进版TF-IDF算法
+﻿"""
+BM25绠楁硶瀹炵幇
+鐢ㄤ簬鍏抽敭璇嶆绱㈢殑鏀硅繘鐗圱F-IDF绠楁硶
 """
 
 import math
@@ -14,27 +14,21 @@ logger = logging.getLogger(__name__)
 
 class BM25:
     """
-    BM25算法实现
+    BM25绠楁硶瀹炵幇
     
-    BM25是TF-IDF的改进版本，考虑了文档长度归一化和词频饱和度
-    公式: BM25(D,Q) = Σ IDF(qi) * (f(qi,D) * (k1+1)) / (f(qi,D) + k1 * (1-b+b*|D|/avgdl))
+    BM25鏄疶F-IDF鐨勬敼杩涚増鏈紝鑰冭檻浜嗘枃妗ｉ暱搴﹀綊涓€鍖栧拰璇嶉楗卞拰搴?    鍏紡: BM25(D,Q) = 危 IDF(qi) * (f(qi,D) * (k1+1)) / (f(qi,D) + k1 * (1-b+b*|D|/avgdl))
     
-    其中:
-    - f(qi,D): 词qi在文档D中的频率
-    - |D|: 文档D的长度
-    - avgdl: 平均文档长度
-    - k1: 控制词频饱和度的参数（通常1.2-2.0）
-    - b: 控制文档长度归一化的参数（通常0.75）
-    """
+    鍏朵腑:
+    - f(qi,D): 璇峲i鍦ㄦ枃妗涓殑棰戠巼
+    - |D|: 鏂囨。D鐨勯暱搴?    - avgdl: 骞冲潎鏂囨。闀垮害
+    - k1: 鎺у埗璇嶉楗卞拰搴︾殑鍙傛暟锛堥€氬父1.2-2.0锛?    - b: 鎺у埗鏂囨。闀垮害褰掍竴鍖栫殑鍙傛暟锛堥€氬父0.75锛?    """
     
     def __init__(self, k1: float = 1.5, b: float = 0.75):
         """
-        初始化BM25
+        鍒濆鍖朆M25
         
         Args:
-            k1: 词频饱和度参数（1.2-2.0）
-            b: 文档长度归一化参数（0-1）
-        """
+            k1: 璇嶉楗卞拰搴﹀弬鏁帮紙1.2-2.0锛?            b: 鏂囨。闀垮害褰掍竴鍖栧弬鏁帮紙0-1锛?        """
         self.k1 = k1
         self.b = b
         self.corpus = []
@@ -44,56 +38,55 @@ class BM25:
         self.idf = {}
         self.doc_len = []
         
-        logger.info(f"[BM25] 初始化: k1={k1}, b={b}")
+        logger.info(f"[BM25] 鍒濆鍖? k1={k1}, b={b}")
     
     def _tokenize(self, text: str) -> List[str]:
         """
-        分词
+        鍒嗚瘝
         
         Args:
-            text: 文本
+            text: 鏂囨湰
             
         Returns:
-            词列表
-        """
+            璇嶅垪琛?        """
         return list(jieba.cut(text))
     
     def fit(self, corpus: List[str]):
         """
-        训练BM25模型
+        璁粌BM25妯″瀷
         
         Args:
-            corpus: 文档列表
+            corpus: 鏂囨。鍒楄〃
         """
         self.corpus_size = len(corpus)
         self.corpus = [self._tokenize(doc) for doc in corpus]
         self.doc_len = [len(doc) for doc in self.corpus]
         self.avgdl = sum(self.doc_len) / self.corpus_size if self.corpus_size > 0 else 0
         
-        # 计算文档频率
+        # 璁＄畻鏂囨。棰戠巼
         df = {}
         for doc in self.corpus:
             unique_words = set(doc)
             for word in unique_words:
                 df[word] = df.get(word, 0) + 1
         
-        # 计算IDF
+        # 璁＄畻IDF
         self.idf = {}
         for word, freq in df.items():
             # IDF = log((N - df + 0.5) / (df + 0.5) + 1)
             self.idf[word] = math.log((self.corpus_size - freq + 0.5) / (freq + 0.5) + 1)
         
-        logger.info(f"[BM25] 训练完成: {self.corpus_size}个文档, 平均长度={self.avgdl:.1f}")
+        logger.info(f"[BM25] 璁粌瀹屾垚: {self.corpus_size}涓枃妗? 骞冲潎闀垮害={self.avgdl:.1f}")
     
     def get_scores(self, query: str) -> List[float]:
         """
-        计算查询与所有文档的BM25分数
+        璁＄畻鏌ヨ涓庢墍鏈夋枃妗ｇ殑BM25鍒嗘暟
         
         Args:
-            query: 查询文本
+            query: 鏌ヨ鏂囨湰
             
         Returns:
-            分数列表
+            鍒嗘暟鍒楄〃
         """
         query_tokens = self._tokenize(query)
         scores = [0.0] * self.corpus_size
@@ -102,17 +95,17 @@ class BM25:
             score = 0.0
             doc_len = self.doc_len[i]
             
-            # 计算文档中每个词的频率
+            # Compute per-document token frequencies for BM25 scoring.
             doc_freqs = Counter(doc)
             
             for token in query_tokens:
                 if token not in self.idf:
                     continue
                 
-                # 词频
+                # 璇嶉
                 freq = doc_freqs.get(token, 0)
                 
-                # BM25分数
+                # BM25鍒嗘暟
                 idf = self.idf[token]
                 numerator = freq * (self.k1 + 1)
                 denominator = freq + self.k1 * (1 - self.b + self.b * doc_len / self.avgdl)
@@ -125,58 +118,52 @@ class BM25:
     
     def get_top_n(self, query: str, documents: List[Dict], top_n: int = 5) -> List[Dict]:
         """
-        获取Top-N相关文档
+        鑾峰彇Top-N鐩稿叧鏂囨。
         
         Args:
-            query: 查询文本
-            documents: 文档列表（包含content字段）
-            top_n: 返回数量
+            query: 鏌ヨ鏂囨湰
+            documents: 鏂囨。鍒楄〃锛堝寘鍚玞ontent瀛楁锛?            top_n: 杩斿洖鏁伴噺
             
         Returns:
-            排序后的文档列表（添加bm25_score字段）
-        """
-        # 提取文档内容
+            鎺掑簭鍚庣殑鏂囨。鍒楄〃锛堟坊鍔燽m25_score瀛楁锛?        """
+        # 鎻愬彇鏂囨。鍐呭
         corpus = [doc.get('content', '') for doc in documents]
         
-        # 训练模型
+        # 璁粌妯″瀷
         self.fit(corpus)
         
-        # 计算分数
+        # 璁＄畻鍒嗘暟
         scores = self.get_scores(query)
         
-        # 添加分数到文档
-        scored_docs = []
+        # 娣诲姞鍒嗘暟鍒版枃妗?        scored_docs = []
         for doc, score in zip(documents, scores):
             doc_copy = doc.copy()
             doc_copy['bm25_score'] = score
             scored_docs.append(doc_copy)
         
-        # 排序并返回Top-N
+        # 鎺掑簭骞惰繑鍥濼op-N
         scored_docs.sort(key=lambda x: x['bm25_score'], reverse=True)
         
-        logger.info(f"[BM25] Top-{top_n}分数: {[f'{d['bm25_score']:.3f}' for d in scored_docs[:top_n]]}")
-        
+        top_scores = [f"{doc['bm25_score']:.3f}" for doc in scored_docs[:top_n]]
+        logger.info(f"[BM25] Top-{top_n}鍒嗘暟: {top_scores}")
         return scored_docs[:top_n]
 
 
 class FuzzyMatcher:
     """
-    模糊匹配器
-    
-    支持编辑距离、拼音相似度等模糊匹配方法
-    """
+    妯＄硦鍖归厤鍣?    
+    鏀寔缂栬緫璺濈銆佹嫾闊崇浉浼煎害绛夋ā绯婂尮閰嶆柟娉?    """
     
     @staticmethod
     def levenshtein_distance(s1: str, s2: str) -> int:
         """
-        计算编辑距离（Levenshtein距离）
-        
+        璁＄畻缂栬緫璺濈锛圠evenshtein璺濈锛?        
         Args:
-            s1: 字符串1
-            s2: 字符串2
+            s1: 瀛楃涓?
+            s2: 瀛楃涓?
             
         Returns:
-            编辑距离
+            缂栬緫璺濈
         """
         if len(s1) < len(s2):
             return FuzzyMatcher.levenshtein_distance(s2, s1)
@@ -188,7 +175,7 @@ class FuzzyMatcher:
         for i, c1 in enumerate(s1):
             current_row = [i + 1]
             for j, c2 in enumerate(s2):
-                # 插入、删除、替换的代价
+                # 鎻掑叆銆佸垹闄ゃ€佹浛鎹㈢殑浠ｄ环
                 insertions = previous_row[j + 1] + 1
                 deletions = current_row[j] + 1
                 substitutions = previous_row[j] + (c1 != c2)
@@ -200,15 +187,13 @@ class FuzzyMatcher:
     @staticmethod
     def similarity(s1: str, s2: str) -> float:
         """
-        计算相似度（基于编辑距离）
-        
+        璁＄畻鐩镐技搴︼紙鍩轰簬缂栬緫璺濈锛?        
         Args:
-            s1: 字符串1
-            s2: 字符串2
+            s1: 瀛楃涓?
+            s2: 瀛楃涓?
             
         Returns:
-            相似度（0-1）
-        """
+            鐩镐技搴︼紙0-1锛?        """
         distance = FuzzyMatcher.levenshtein_distance(s1, s2)
         max_len = max(len(s1), len(s2))
         
@@ -220,15 +205,13 @@ class FuzzyMatcher:
     @staticmethod
     def fuzzy_match(query: str, candidates: List[str], threshold: float = 0.8) -> List[str]:
         """
-        模糊匹配
+        妯＄硦鍖归厤
         
         Args:
-            query: 查询字符串
-            candidates: 候选字符串列表
-            threshold: 相似度阈值
-            
+            query: 鏌ヨ瀛楃涓?            candidates: 鍊欓€夊瓧绗︿覆鍒楄〃
+            threshold: 鐩镐技搴﹂槇鍊?            
         Returns:
-            匹配的字符串列表
+            鍖归厤鐨勫瓧绗︿覆鍒楄〃
         """
         matches = []
         for candidate in candidates:
@@ -240,27 +223,15 @@ class FuzzyMatcher:
     
     @staticmethod
     def expand_query_with_fuzzy(query: str, vocabulary: Set[str], threshold: float = 0.85) -> List[str]:
-        """
-        使用模糊匹配扩展查询
-        
-        Args:
-            query: 查询文本
-            vocabulary: 词汇表
-            threshold: 相似度阈值
-            
-        Returns:
-            扩展后的查询词列表
-        """
+        """Expand query tokens with fuzzy-matched vocabulary items."""
         query_tokens = list(jieba.cut(query))
         expanded_tokens = set(query_tokens)
-        
+
         for token in query_tokens:
-            # 跳过单字符
             if len(token) <= 1:
                 continue
-            
-            # 查找相似词
+
             similar_words = FuzzyMatcher.fuzzy_match(token, list(vocabulary), threshold)
             expanded_tokens.update(similar_words)
-        
+
         return list(expanded_tokens)

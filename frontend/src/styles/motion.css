@@ -48,7 +48,7 @@
   }
 }
 
-.reveal-item {
+.reveal-item[data-reveal-ready='true'] {
   opacity: 0;
   transform: translate3d(0, var(--motion-reveal-distance), 0) scale(var(--motion-reveal-scale));
   transition:
@@ -60,7 +60,8 @@
   will-change: opacity, transform;
 }
 
-.reveal-item.is-revealed {
+.reveal-item.is-revealed,
+.reveal-item:not([data-reveal-ready='true']) {
   opacity: 1;
   transform: translate3d(0, 0, 0) scale(1);
   filter: blur(0);

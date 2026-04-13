@@ -29,11 +29,11 @@
       - backend-logs:/app/logs
     restart: unless-stopped
     ports:
-      - '8001:8001'
+      - '${BACKEND_PORT:-8001}:8001'
     networks:
       - student-ai-network
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:8001/health/ready']
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://localhost:8001/health/ready', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -49,11 +49,11 @@
         condition: service_healthy
     restart: unless-stopped
     ports:
-      - '80:80'
+      - '${FRONTEND_PORT:-80}:80'
     networks:
       - student-ai-network
     healthcheck:
-      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost/']
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1/health']
       interval: 30s
       timeout: 10s
       retries: 3

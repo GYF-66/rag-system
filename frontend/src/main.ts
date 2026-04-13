@@ -12,12 +12,22 @@ import { vLazyImg } from './directives/lazyImg';
 import { vReveal } from './directives/reveal';
 import { setupGlobalErrorHandler } from './utils/errorHandler';
 import { VueQueryPlugin, vueQueryPluginOptions } from './plugins/vueQuery';
+import { useAuthStore } from './stores/auth';
+import { useChatStore } from './stores/chat';
+import { useHistoryStore } from './stores/history';
 
 const app = createApp(App);
+const pinia = createPinia();
 
-app.use(createPinia());
+app.use(pinia);
 app.use(router);
 app.use(VueQueryPlugin, vueQueryPluginOptions);
+
+const authStore = useAuthStore(pinia);
+if (!authStore.isAuthenticated) {
+  useChatStore(pinia).resetGuestSession();
+  useHistoryStore(pinia).resetGuestHistory();
+}
 
 // 注册全局指令
 app.directive('lazy-img', vLazyImg);

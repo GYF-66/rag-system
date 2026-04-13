@@ -65,6 +65,8 @@ yarn-error.log*
 
 # 前端构建
 frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
 
 # macOS
 .DS_Store
@@ -77,6 +79,10 @@ nul
 *.tmp
 *.temp
 .cache/
+release-artifacts/
+.deploy_staging_debug/
+scripts/__pycache__/
+DeepScientist/
 
 # Ignore IDE specific
 *.code-workspace
@@ -94,8 +100,16 @@ output/*.log
 output/*.pid
 output/*.cmd
 output/*.json
+output/
 cache/
 backend/cache/tfidf/
+deploy_bundle.tar.gz
+deploy_bundle_*.tar.gz
+rag-system_*.zip
+evaluation_results/
+paper-photo/
+start-test.log
+dotnet-start-test.log
 
 # 会话数据（运行时生成）
 backend/data/

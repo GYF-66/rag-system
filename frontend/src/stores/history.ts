@@ -126,6 +126,12 @@ export const useHistoryStore = defineStore('history', {
       this.persist();
     },
 
+    resetGuestHistory() {
+      this.items = [];
+      this.searchQuery = '';
+      localStorage.removeItem(STORAGE_KEY);
+    },
+
     getItem(id: string): ChatHistory | undefined {
       return this.items.find((item) => item.id === id);
     },
