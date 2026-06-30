@@ -29,6 +29,8 @@ Cloudflare Pages 构建参数：
 
 后端可直接用仓库根目录 `Dockerfile` 部署到 Render / Railway / Fly.io / 海外 VPS。
 
+如果使用 Render 的 Docker Web Service，应用必须监听平台注入的 `PORT` 环境变量。当前仓库已兼容 Render 端口分配，不需要手动把后端固定到 `8001`。
+
 核心环境变量：
 
 - `ENVIRONMENT=production`
@@ -52,3 +54,5 @@ Cloudflare 中配置：
 - `https://rag.gyfbest.cn` 可打开页面
 - `https://api-rag.gyfbest.cn/health/ready` 返回就绪结果
 - 浏览器请求实际命中 `https://api-rag.gyfbest.cn/api/chat/stream`
+
+如果 `api-rag.gyfbest.cn` 返回 `502 Bad Gateway`，优先检查 Render 服务是否启动成功，以及后端是否监听了 Render 注入的 `PORT`，而不是固定端口 `8001`。

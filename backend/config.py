@@ -36,7 +36,7 @@ def _split_csv(value: str | None) -> List[str]:
 
 
 API_HOST = os.getenv('API_HOST', '0.0.0.0')
-API_PORT = int(os.getenv('API_PORT', '8001'))
+API_PORT = int(os.getenv('API_PORT') or os.getenv('PORT', '8001'))
 API_RELOAD = _as_bool(os.getenv('API_RELOAD'), True)
 
 TOP_K_RESULTS = int(os.getenv('TOP_K_RESULTS', '3'))

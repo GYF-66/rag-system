@@ -84,6 +84,8 @@ VITE_API_BASE_URL=https://api-rag.gyfbest.cn
 
 这样浏览器会直接请求远程后端，适合无大陆备案源站的场景。
 
+如果路线 B 中 `api-rag.gyfbest.cn` 返回 `502`，优先检查远端 Python 服务是否真的已经上线，以及它是否监听了平台分配的 `PORT`。Render 这类平台不会保证容器固定使用 `8001`。
+
 当前生产前端已暂时关闭 PWA 注册。`frontend/public/sw.js` 只保留为自清理脚本：旧浏览器如果已经安装过 Workbox Service Worker，会更新到这个脚本，清空 Cache Storage，注销自身，并重新加载页面。上线稳定后如需恢复 PWA，必须先确认 `/api*`、`/health*`、`/metrics` 不会被 navigation fallback 或运行时缓存接管。
 
 ## 3. DNS 与防火墙

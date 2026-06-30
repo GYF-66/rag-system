@@ -15,8 +15,6 @@
         value: "false"
       - key: API_HOST
         value: 0.0.0.0
-      - key: API_PORT
-        value: 8001
       - key: SESSION_BACKEND
         value: redis
       - key: CORS_ORIGINS
