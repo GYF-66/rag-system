@@ -1,0 +1,29 @@
+﻿services:
+  - type: web
+    name: student-ai-backend
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    autoDeploy: false
+    healthCheckPath: /health/ready
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: STRICT_PRODUCTION_MODE
+        value: "true"
+      - key: PUBLIC_DEMO_MODE
+        value: "false"
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_PORT
+        value: 8001
+      - key: SESSION_BACKEND
+        value: redis
+      - key: CORS_ORIGINS
+        value: https://rag.gyfbest.cn,https://api-rag.gyfbest.cn
+      - key: REDIS_REQUIRED
+        value: "true"
+      - key: MONGODB_REQUIRED
+        value: "true"
+      - key: KNOWLEDGE_BASE_REQUIRED
+        value: "true"

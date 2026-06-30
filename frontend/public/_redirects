@@ -1,0 +1,3 @@
+﻿/api/* https://api-rag.gyfbest.cn/api/:splat 200
+/health/* https://api-rag.gyfbest.cn/health/:splat 200
+/* /index.html 200

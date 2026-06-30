@@ -1,0 +1,6 @@
+﻿name = "student-ai-frontend"
+compatibility_date = "2026-06-30"
+
+[assets]
+directory = "./frontend/dist"
+not_found_handling = "single-page-application"
